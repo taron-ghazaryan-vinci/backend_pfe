@@ -21,4 +21,11 @@ class LoginView(APIView):
         if not check_password(user['password'], data['password']):
             return Response({"error": "Mot de passe incorrect"}, status=401)
 
-        return Response({"message": "Connexion réussie"}, status=200)
+        # Préparer les données utilisateur à retourner (exclure le mot de passe)
+        user_data = {
+            "username": user.get('username'),
+            "email": user.get('email'),
+            "role": user.get('role')  # Par défaut, rôle "user" si non spécifié
+        }
+
+        return Response({"message": "Connexion réussie", "user": user_data}, status=200)
