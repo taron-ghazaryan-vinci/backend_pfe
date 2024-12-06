@@ -13,9 +13,9 @@ class SubmitClientResponseView(APIView):
             return Response({"error":"les données doivent etre en liste"},status=400)
         
         for response in data:
-            answer = data.get('answer')  
-            company_id = data.get('company_id')  
-            question_id = data.get('question_id')  
+            answer = response.get('answer')  
+            company_id = response.get('company_id')  
+            question_id = response.get('question_id')  
         
             if not answer or not company_id or not question_id:
                 return Response({"error": "Réponse, ID de l'entreprise et ID de la question sont obligatoires."}, status=400)
