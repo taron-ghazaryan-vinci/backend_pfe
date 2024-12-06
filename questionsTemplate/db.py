@@ -1,3 +1,4 @@
+import json
 from backend_pfe.db import db
 from pymongo import MongoClient
 from bson import ObjectId
@@ -27,7 +28,7 @@ def get_question_by_id(question_id):
 
 def get_all_questions():
     questions = list(db['template_questions'].find())
-    return json_util.dumps(questions)
+    return json.loads(json_util.dumps(questions))
 
 def update_question_by_id(question_id,new_question):
     id = conversion(question_id)
