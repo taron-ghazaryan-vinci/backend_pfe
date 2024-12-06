@@ -21,8 +21,7 @@ class SubmitClientResponseView(APIView):
                 return Response({"error": "Réponse, ID de l'entreprise et ID de la question sont obligatoires."}, status=400)
 
             try:
-                response_id = submit_client_response(answer, company_id, question_id)  # Appeler votre fonction MongoDB
-                return Response({"message": "Réponse enregistrée avec succès", "response_id": str(response_id)}, status=201)
+                submit_client_response(answer, company_id, question_id)  # Appeler votre fonction MongoDB
             except Exception as e:
                 return Response({"error": str(e)}, status=500)
         
