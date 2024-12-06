@@ -22,4 +22,6 @@ from django.urls import path
 
 urlpatterns = [
     path('users/', include('users.urls')),
+    path('questionsTemplate/', include('questionsTemplate.urls')),
+    path('responsesTemplate/', include('responsesTemplate.urls')),
 ]
