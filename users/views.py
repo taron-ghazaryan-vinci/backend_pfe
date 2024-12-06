@@ -57,9 +57,11 @@ class LoginView(APIView):
 
         # Préparer les données utilisateur à retourner (exclure le mot de passe)
         user_data = {
+            "userId": user.get('id'),
             "username": user.get('username'),
             "email": user.get('email'),
-            "role": user.get('role')  # Par défaut, rôle "user" si non spécifié
+            "role": user.get('role'),
+            "template" : user.get('template')
         }
 
         return Response({"message": "Connexion réussie", "user": user_data}, status=200)
