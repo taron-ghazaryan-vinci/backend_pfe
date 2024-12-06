@@ -7,13 +7,13 @@ from bson import json_util
 
 templates_collections = db['questionnaires']
 
+### cette methode va recupere les infos du templates qui nous interresse pour le client en particulié
 def filter_Questions(company_id):
     have_workers = False
     have_product = False
     have_owner = False
     have_location= False
 
-    company_responses = get_clients_responses(company_id)
     questions = json_util.loads(get_all_questions())
 
     id_question_worker = None
