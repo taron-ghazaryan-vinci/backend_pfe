@@ -4,12 +4,13 @@ from bson import ObjectId
 
 templates_collections = db['template_questions']
 
-def create_question(question):
+def create_question(question,filtre):
     if not question_is_valid(question):
         raise ValueError("La question ne peut pas être vide ou contenir uniquement des espaces.")
    
     template_question = {
         "question": question,
+        "filtre": filtre
     }
     return templates_collections.insert_one(template_question).inserted_id
 
