@@ -68,3 +68,39 @@ def filter_Questions(company_id):
     }
 
 
+### utiliser filter_Questions pour creer le questionnaire du client
+def create_survey(company_id):
+    filter_Questions(company_id)
+    questions = get_all_questions()
+    
+    
+
+### Récupère toutes les questions (y compris les catégories imbriquées) dans un questionnaire.
+def get_all_questions():
+    questionnaire = db['questionnaires'].find_one()  # Récupère le questionnaire
+    if not questionnaire:
+        return {"error": "Aucun questionnaire trouvé."}
+    
+    questions = questionnaire.get('questions', {})
+    all_questions = extract_all_questions(questions)  # Extrait toutes les questions
+    return all_questions
+
+
+### Parcourt récursivement la structure de données pour extraire toutes les questions.
+def extract_all_questions(data):
+    all_questions = []
+    
+    # Si data est une liste (comme pour les questions)
+    if isinstance(data, list):
+        for item in data:
+            if isinstance(item, dict):  # Si l'élément est un dictionnaire, probablement une question avec choix
+                all_questions.append(item)
+    
+    # Si data est un dictionnaire (par exemple, une catégorie comme "gouvernance")
+    elif isinstance(data, dict):
+        for key, value in data.items():
+            # Rappel : appel récursif pour parcourir tous les sous-dictionnaires et listes imbriquées
+            all_questions.extend(extract_all_questions(value))  # Ajouter les résultats du sous-dictionnaire
+
+    return all_questions
+
