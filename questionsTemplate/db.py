@@ -28,7 +28,7 @@ def get_question_by_id(question_id):
 
 def get_all_questions():
     questions = list(db['template_questions'].find())
-    return json.loads(json_util.dumps(questions))
+    return json_util.dumps(questions)
 
 def update_question_by_id(question_id,new_question):
     id = conversion(question_id)
