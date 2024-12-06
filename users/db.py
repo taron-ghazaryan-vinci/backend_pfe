@@ -5,14 +5,16 @@ from pymongo import MongoClient
 # Référence à la collection MongoDB
 users_collection = db['users']
 
-def create_user(username, email, password):
+def create_user(username, email, password, role):
     """Créer un utilisateur"""
     # Hacher le mot de passe avant de le stocker
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
     user = {
         "username": username,
         "email": email,
-        "password": hashed_password
+        "password": hashed_password,
+        "role" : role,
+        "template": False
     }
     return users_collection.insert_one(user).inserted_id
 
