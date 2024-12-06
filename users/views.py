@@ -7,7 +7,7 @@ class RegisterView(APIView):
         data = request.data
         if find_user_by_email(data['email']):
             return Response({"error": "Email déjà utilisé"}, status=400)
-        create_user(data['username'], data['email'], data['password'])
+        create_user(data['username'], data['email'], data['password'], data['role'])
         return Response({"message": "Utilisateur créé"}, status=201)
 
 
