@@ -1,6 +1,7 @@
 from backend_pfe.db import db
 from pymongo import MongoClient
 from bson import ObjectId
+from bson import json_util
 
 templates_collections = db['template_questions']
 
@@ -21,7 +22,8 @@ def delete_question_by_id(question_id):
 
 def get_question_by_id(question_id):
     id = conversion(question_id)
-    return db['template_questions'].find_one({"_id": id })
+    result = db['template_questions'].find_one({"_id": id })
+    return json_util.dumps(result) if result else None
 
 def get_all_questions():
     questions = list(db['template_questions'].find())

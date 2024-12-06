@@ -13,6 +13,6 @@ def submit_client_response(answer,company_id,question_id):
     return templates_collections.insert_one(answer_question).inserted_id
 
 def get_clients_responses(company_id):
-    return list(db['template_responses'].find({"company_id": company_id}))
-
+    responses = list(db['template_responses'].find({"company_id": company_id}))
+    return json_util.dumps(responses)
 
