@@ -1,3 +1,5 @@
+from http.client import responses
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .db import create_user, find_user_by_email, check_password, set_user_template_true
@@ -61,7 +63,9 @@ class LoginView(APIView):
             "username": user.get('username'),
             "email": user.get('email'),
             "role": user.get('role'),
-            "template" : user.get('template')
+            "template" : user.get('template'),
+            "templates" : user.get('templates'),
+            "responses" : user.get('responses')
         }
 
         return Response({"message": "Connexion réussie", "user": user_data}, status=200)
