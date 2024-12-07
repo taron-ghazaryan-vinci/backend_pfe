@@ -21,7 +21,9 @@ def create_user(username, email, password, role):
         "email": email,
         "password": hashed_password,
         "role": role,
-        "template": False
+        "template": False,
+        "templates": None,
+        "responses": []
     }
     return users_collection.insert_one(user).inserted_id
 
