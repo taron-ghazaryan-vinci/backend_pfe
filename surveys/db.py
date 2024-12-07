@@ -82,13 +82,12 @@ def get_engagements_clients(company_email):
     engagements = []
 
     for response in client_responses:
-        question_id = response.get("questionId")
-
+        question = response.get("question")
         engagements_chosen = response.get("engagementsChosen", [])
 
         if engagements_chosen:
             engagements.append({
-                "questionId": question_id,
+                "question": question,
                 "engagementsChosen": engagements_chosen
             })
 
