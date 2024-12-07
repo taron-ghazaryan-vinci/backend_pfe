@@ -7,7 +7,10 @@ from questionsTemplate.db import create_question, delete_question_by_id, get_all
 # Create your views here.
 class CreateQuestionView(APIView):
     def post(self,request):
-        question = request.data.get["question"]   
+        question = request.data.get("question")   
+        if not question:
+            return Response({"error": "La question est obligatoire."}, status=400)
+        
         try:
             create_question(question)
             return Response({"message" : "Question du onborading créé"}, status=201)
