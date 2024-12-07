@@ -37,3 +37,15 @@ def check_password(stored_password, provided_password):
     :return: True si les mots de passe correspondent, sinon False.
     """
     return bcrypt.checkpw(provided_password.encode('utf-8'), stored_password.encode('utf-8'))
+
+def set_user_template_true(custom_id):
+    """
+    Mettre à jour le champ 'template' d'un utilisateur en fonction de l'attribut personnalisé 'id'.
+    Définit le champ 'template' à True.
+    """
+    result = users_collection.update_one(
+        {"id": custom_id},
+        {"$set": {"template": True}}
+    )
+    return result.modified_count > 0  # Retourne True si une modification a été effectuée
+

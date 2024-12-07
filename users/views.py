@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .db import create_user, find_user_by_email, check_password
+from .db import create_user, find_user_by_email, check_password, set_user_template_true
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -65,3 +65,15 @@ class LoginView(APIView):
         }
 
         return Response({"message": "Connexion réussie", "user": user_data}, status=200)
+
+class SetTemplateTrueView(APIView):
+    def patch(self, request, custom_id):
+        """
+        Mettre le champ 'template' d'un utilisateur à True par ID personnalisé.
+        """
+        updated = set_user_template_true(custom_id)
+
+        if updated:
+            return Response({"message": "Template mis à jour à True avec succès"}, status=status.HTTP_200_OK)
+        else:
+            return Response({"error": "Utilisateur non trouvé ou aucune mise à jour effectuée"}, status=status.HTTP_404_NOT_FOUND)
