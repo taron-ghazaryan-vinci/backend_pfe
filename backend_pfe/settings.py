@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     'users',
     'corsheaders',
     'questionsTemplate',
-    'responsesTemplate'
+    'responsesTemplate',
+    'surveys'
 ]
 
 MIDDLEWARE = [
