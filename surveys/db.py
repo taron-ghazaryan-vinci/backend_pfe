@@ -75,7 +75,7 @@ def get_engagements_clients(company_email):
     if not company:
         return {"error": "Company not found"}
   
-    client_responses = company.get('reponses', [])
+    client_responses = company.get('responses', [])
     if not client_responses:
         return {"error": "No responses found for the company"}
 
@@ -83,6 +83,7 @@ def get_engagements_clients(company_email):
 
     for response in client_responses:
         question_id = response.get("questionId")
+
         engagements_chosen = response.get("engagementsChosen", [])
 
         if engagements_chosen:
@@ -91,7 +92,5 @@ def get_engagements_clients(company_email):
                 "engagementsChosen": engagements_chosen
             })
 
-    if engagements:
-        return {"engagements": engagements}
-    else:
-        return {"message": "No engagements found for this company"}
+    
+    return {"engagements": engagements}  
