@@ -15,7 +15,7 @@ class CreateSurveyView(APIView):
         
         return Response(survey,status=200)
 
-class GetEngagementsClient(APIView):
+class GetEngagementsClientView(APIView):
     def get(self,request,company_email):
         company = find_user_by_email(company_email)
         if not company:
