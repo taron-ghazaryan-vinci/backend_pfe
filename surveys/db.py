@@ -69,4 +69,29 @@ def get_all_questions():
     questions = list(db['questions'].find())
     return questions
 
-    
+
+def get_engagements_clients(company_email):
+    company = find_user_by_email(company_email)
+    if not company:
+        return {"error": "Company not found"}
+  
+    client_responses = company.get('reponses', [])
+    if not client_responses:
+        return {"error": "No responses found for the company"}
+
+    engagements = []
+
+    for response in client_responses:
+        question_id = response.get("questionId")
+        engagements_chosen = response.get("engagementsChosen", [])
+
+        if engagements_chosen:
+            engagements.append({
+                "questionId": question_id,
+                "engagementsChosen": engagements_chosen
+            })
+
+    if engagements:
+        return {"engagements": engagements}
+    else:
+        return {"message": "No engagements found for this company"}
