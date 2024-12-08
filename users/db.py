@@ -7,6 +7,12 @@ from pymongo import MongoClient
 # Référence à la collection MongoDB
 users_collection = db['users']
 
+def get_all_users():
+    """
+    Récupérer tous les utilisateurs.
+    """
+    users = list(users_collection.find({}, {"_id": 0}))  # Exclure le champ _id de MongoDB
+    return users
 
 def create_user(username, email, password, role):
     """Créer un utilisateur"""
@@ -50,4 +56,13 @@ def set_user_template_true(custom_id):
         {"$set": {"template": True}}
     )
     return result.modified_count > 0  # Retourne True si une modification a été effectuée
+
+
+def get_user_by_id(user_id):
+    """
+    Récupérer un utilisateur par son ID.
+    """
+    user = users_collection.find_one({"id": user_id}, {"_id": 0})  # Exclure le champ _id de MongoDB
+    return user
+
 
