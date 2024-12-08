@@ -41,7 +41,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'questionsTemplate',
     'responsesTemplate',
-    'surveys'
+    'surveys',
+    'questions',
 ]
 
 MIDDLEWARE = [
@@ -125,9 +126,6 @@ REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',  # Fournit une interface web pour tester
-    ],
-    'DEFAULT_PARSER_CLASSES': [
-        'rest_framework.parsers.JSONParser',
     ],
 }
 
