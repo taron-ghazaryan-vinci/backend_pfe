@@ -2,7 +2,7 @@
 from backend_pfe.db import db
 from pymongo import MongoClient
 from responsesTemplate.db import get_client_response_for_question, get_clients_responses
-from questionsTemplate.db import get_all_questions
+from questionsTemplate.db import get_all_questions, get_question_by_id
 from bson import ObjectId, json_util
 
 from users.db import find_user_by_email
@@ -107,6 +107,3 @@ def get_engagements_clients(company_email):
     return {"engagements": engagements}  
 
 
-def get_question_by_id(question_id):
-    result = db['questions'].find_one({"_id": question_id })
-    return json_util.dumps(result)
