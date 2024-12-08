@@ -3,7 +3,7 @@ from http.client import responses
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .db import (create_user, find_user_by_email, check_password, set_user_template_true,
-                 get_user_responses_by_email, update_user_responses)
+                 get_user_responses_by_email,get_all_users, get_user_by_id, update_user_responses)
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -82,6 +82,47 @@ class SetTemplateTrueView(APIView):
             return Response({"message": "Template mis à jour à True avec succès"}, status=status.HTTP_200_OK)
         else:
             return Response({"error": "Utilisateur non trouvé ou aucune mise à jour effectuée"}, status=status.HTTP_404_NOT_FOUND)
+
+
+
+class GetAllUsersView(APIView):
+    def get(self, request):
+        """
+        Endpoint pour récupérer tous les utilisateurs.
+        """
+        try:
+            users = get_all_users()
+            return Response(
+                {"users": users},
+                status=status.HTTP_200_OK
+            )
+        except Exception as e:
+            return Response(
+                {"error": f"Une erreur est survenue : {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+class GetUserByIdView(APIView):
+    def get(self, request, user_id):
+        """
+        Endpoint pour récupérer un utilisateur par son ID.
+        """
+        try:
+            user = get_user_by_id(user_id)
+            if not user:
+                return Response(
+                    {"error": "Utilisateur non trouvé"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            return Response(
+                {"user": user},
+                status=status.HTTP_200_OK
+            )
+        except Exception as e:
+            return Response(
+                {"error": f"Une erreur est survenue : {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class GetUserResponsesView(APIView):

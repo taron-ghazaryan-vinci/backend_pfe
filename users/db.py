@@ -10,6 +10,14 @@ from questionsTemplate.db import question_is_valid
 users_collection = db['users']
 question_collection = db['questions']
 
+
+def get_all_users():
+    """
+    Récupérer tous les utilisateurs.
+    """
+    users = list(users_collection.find({}, {"_id": 0}))  # Exclure le champ _id de MongoDB
+    return users
+
 def create_user(username, email, password, role):
     """Créer un utilisateur"""
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
@@ -107,6 +115,15 @@ def get_user_responses_by_email(email):
             })
 
     return detailed_responses
+
+def get_user_by_id(user_id):
+    """
+    Récupérer un utilisateur par son ID.
+    """
+    user = users_collection.find_one({"id": user_id}, {"_id": 0})  # Exclure le champ _id de MongoDB
+    return user
+
+
 
 
 def update_user_responses(email, question_id, responses_chosen, engagements_chosen):
