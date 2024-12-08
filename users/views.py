@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from .db import create_user, find_user_by_email, check_password
+from .db import create_user, find_user_by_email, check_password, get_user_responses_by_email
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -65,3 +65,26 @@ class LoginView(APIView):
         }
 
         return Response({"message": "Connexion réussie", "user": user_data}, status=200)
+
+
+class GetUserResponsesView(APIView):
+    def get(self, request, email):
+        """
+        Endpoint pour récupérer les réponses détaillées d'un utilisateur à partir de son email.
+        """
+        try:
+            responses = get_user_responses_by_email(email)
+
+            if not responses:
+                return Response(
+                    {"message": "Aucune réponse trouvée pour cet utilisateur."},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            return Response({"responses": responses}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {"error": f"Une erreur est survenue : {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
