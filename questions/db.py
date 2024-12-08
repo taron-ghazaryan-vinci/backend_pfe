@@ -17,16 +17,24 @@ def create_multiple_choice_question(enjeu, question_text, templates, responses):
     """
     question_id = str(uuid.uuid4())  # Générer un ID unique
 
+    # Construction des réponses avec leurs labels et scores
+    responses_possible = [
+        {
+            "id": str(i + 1),
+            "label": response.get('label'),
+            "scoreESG": response.get('scoreESG'),
+            "scoreEngagement": response.get('scoreEngagement')
+        }
+        for i, response in enumerate(responses)
+    ]
+
     question = {
         "id": question_id,
         "enjeu": enjeu,
         "question": question_text,
         "templates": templates,
         "type": "choixMultiples",
-        "responsesPossible": [
-            {"id": str(i + 1), "label": response, "scoreESG": None, "scoreEngagement": None}
-            for i, response in enumerate(responses)
-        ]
+        "responsesPossible": responses_possible
     }
 
     questions_collection.insert_one(question)
@@ -37,6 +45,8 @@ def create_multiple_choice_question(enjeu, question_text, templates, responses):
 def create_open_question(enjeu, question_text, templates):
     """
     Créer une question de type ouverte avec un ID unique.
+    Une seule réponse possible est prévue, initialement vide.
+    Les scores ESG et Engagement sont initialisés à 0.00.
     """
     question_id = str(uuid.uuid4())  # Générer un ID unique
 
@@ -46,11 +56,19 @@ def create_open_question(enjeu, question_text, templates):
         "question": question_text,
         "templates": templates,
         "type": "ouverte",
-        "responsesPossible": []
+        "responsesPossible": [
+            {
+                "id": "1",
+                "label": "",
+                "scoreESG": 0.00,
+                "scoreEngagement": 0.00
+            }
+        ]
     }
 
     questions_collection.insert_one(question)
     return question_id
+
 
 def delete_question_by_id(question_id):
     """
@@ -60,6 +78,37 @@ def delete_question_by_id(question_id):
     """
     result = questions_collection.delete_one({"id": question_id})
     return result.deleted_count > 0  # Retourne True si une suppression a été effectuée
+
+
+def update_question(question_id, updates):
+    """
+    Met à jour une question existante en fonction de son ID.
+    :param question_id: L'ID de la question à mettre à jour.
+    :param updates: Un dictionnaire contenant les champs à mettre à jour.
+    :return: True si une mise à jour a été effectuée, sinon False.
+    """
+    result = questions_collection.update_one(
+        {"id": question_id},
+        {"$set": updates}
+    )
+    return result.modified_count > 0
+
+def get_all_questions():
+    """
+    Récupère toutes les questions depuis la base de données.
+    :return: Une liste de toutes les questions.
+    """
+    return list(questions_collection.find())
+
+def get_question_by_id(question_id):
+    """
+    Récupérer une question en fonction de son ID.
+    """
+    question = questions_collection.find_one({"id": question_id})
+    if question:
+        question["_id"] = str(question["_id"])  # Convertir ObjectId en chaîne pour le JSON
+    return question
+
 
 
 
