@@ -7,7 +7,7 @@ from bson import json_util
 
 from users.db import find_user_by_email
 
-templates_collections = db['questions']
+questions_collections = db['questions']
 
 ### pour creer le questionnaire du client
 def create_survey(company_email):
