@@ -108,5 +108,5 @@ def get_engagements_clients(company_email):
 
 
 def get_question_by_id(question_id):
-    result = db['questions'].find_one({"_id": id })
+    result = db['questions'].find_one({"_id": question_id })
     return json_util.dumps(result)
