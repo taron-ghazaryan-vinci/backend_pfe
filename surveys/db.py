@@ -84,7 +84,7 @@ def get_engagements_clients(company_email):
     for response in client_responses:
         question_id = response.get("question")
         q = get_question_by_id(question_id)
-        if not question:
+        if not q:
             return {"error": "No question found for the id"}
 
         question = q.get("question")
