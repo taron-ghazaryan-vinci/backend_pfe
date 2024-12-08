@@ -3,7 +3,7 @@ from backend_pfe.db import db
 from pymongo import MongoClient
 from responsesTemplate.db import get_client_response_for_question, get_clients_responses
 from questionsTemplate.db import get_all_questions
-from bson import json_util
+from bson import ObjectId, json_util
 
 from users.db import find_user_by_email
 
@@ -82,8 +82,20 @@ def get_engagements_clients(company_email):
     engagements = []
 
     for response in client_responses:
-        question = response.get("question")
-        engagements_chosen = response.get("engagementsChosen", [])
+        question_id = response.get("question")
+        q = get_question_by_id(question_id)
+        if not question:
+            return {"error": "No question found for the id"}
+
+        question = q.get("question")
+        engagements_chosen_user = response.get("engagementsChosen", [])
+
+        responses_possible = q.get("responsesPossible", [])
+        engagements_chosen =[]
+
+        for r in responses_possible:
+            if r.get("id") in engagements_chosen_user:
+                engagements_chosen.append(r)
 
         if engagements_chosen:
             engagements.append({
@@ -93,3 +105,8 @@ def get_engagements_clients(company_email):
 
     
     return {"engagements": engagements}  
+
+
+def get_question_by_id(question_id):
+    result = db['questions'].find_one({"_id": id })
+    return json_util.dumps(result)
