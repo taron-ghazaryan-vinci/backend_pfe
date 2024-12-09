@@ -33,7 +33,8 @@ def create_user(username, email, password, role):
         "role": role,
         "template": False,
         "templates": None,
-        "responses": []
+        "responses": [],
+        "boolean_esg": False
     }
     return users_collection.insert_one(user).inserted_id
 
@@ -60,6 +61,17 @@ def set_user_template_true(custom_id):
         {"$set": {"template": True}}
     )
     return result.modified_count > 0  # Retourne True si une modification a été effectuée
+
+def set_boolean_esg_true(user_id):
+    """
+    Mettre à jour le champ 'boolean_esg' d'un utilisateur à True.
+    """
+    result = users_collection.update_one(
+        {"id": user_id},
+        {"$set": {"boolean_esg": True}}
+    )
+    return result.modified_count > 0  # Retourne True si une modification a été effectuée
+
 
 
 

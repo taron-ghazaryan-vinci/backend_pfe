@@ -3,7 +3,8 @@ from http.client import responses
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .db import (create_user, find_user_by_email, check_password, set_user_template_true,
-                 get_user_responses_by_email,get_all_users, get_user_by_id, update_user_responses)
+                 get_user_responses_by_email,get_all_users, get_user_by_id,
+                 update_user_responses,set_boolean_esg_true)
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -66,7 +67,8 @@ class LoginView(APIView):
             "role": user.get('role'),
             "template" : user.get('template'),
             "templates" : user.get('templates'),
-            "responses" : user.get('responses')
+            "responses" : user.get('responses'),
+            "boolean_esg" : user.get('boolean_esg'),
         }
 
         return Response({"message": "Connexion réussie", "user": user_data}, status=200)
@@ -83,6 +85,27 @@ class SetTemplateTrueView(APIView):
         else:
             return Response({"error": "Utilisateur non trouvé ou aucune mise à jour effectuée"}, status=status.HTTP_404_NOT_FOUND)
 
+class SetBooleanESGView(APIView):
+    def patch(self, request, user_id):
+        """
+        Endpoint pour mettre à jour le champ 'boolean_esg' d'un utilisateur à True.
+        """
+        try:
+            success = set_boolean_esg_true(user_id)
+            if not success:
+                return Response(
+                    {"error": "Utilisateur non trouvé ou mise à jour échouée"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            return Response(
+                {"message": "Champ 'boolean_esg' mis à jour avec succès"},
+                status=status.HTTP_200_OK
+            )
+        except Exception as e:
+            return Response(
+                {"error": f"Une erreur est survenue : {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class GetAllUsersView(APIView):
