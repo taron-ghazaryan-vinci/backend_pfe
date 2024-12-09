@@ -167,6 +167,19 @@ class UpdateUserResponsesView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        # Valider le format des données (le commentaire peut être facultatif)
+        if not all("id" in r for r in responses_chosen):
+            return Response(
+                {"error": "Chaque élément de responses_chosen doit contenir 'id' (comment facultatif)"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if not all("id" in e for e in engagements_chosen):
+            return Response(
+                {"error": "Chaque élément de engagements_chosen doit contenir 'id' (comment facultatif)"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         # Appeler la méthode pour mettre à jour les réponses
         result = update_user_responses(email, question_id, responses_chosen, engagements_chosen)
 
@@ -174,4 +187,5 @@ class UpdateUserResponsesView(APIView):
             return Response(result, status=status.HTTP_404_NOT_FOUND)
 
         return Response(result, status=status.HTTP_200_OK)
+
 

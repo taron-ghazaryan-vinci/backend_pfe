@@ -83,26 +83,28 @@ def get_user_responses_by_email(email):
         if question:
             # Récupérer les détails des réponses choisies
             chosen_responses_details = []
-            for response_id in response.get("responsesChosen", []):
+            for chosen_response in response.get("responsesChosen", []):
                 matching_response = next(
-                    (r for r in question["responsesPossible"] if r["id"] == response_id), None
+                    (r for r in question["responsesPossible"] if r["id"] == chosen_response["id"]), None
                 )
                 if matching_response:
                     chosen_responses_details.append({
-                        "id": response_id,
-                        "label": matching_response["label"]
+                        "id": chosen_response["id"],
+                        "label": matching_response["label"],
+                        "comment": chosen_response.get("comment")
                     })
 
             # Récupérer les détails des engagements choisis
             engagements_chosen_details = []
-            for engagement_id in response.get("engagementsChosen", []):
+            for chosen_engagement in response.get("engagementsChosen", []):
                 matching_engagement = next(
-                    (r for r in question["responsesPossible"] if r["id"] == engagement_id), None
+                    (r for r in question["responsesPossible"] if r["id"] == chosen_engagement["id"]), None
                 )
                 if matching_engagement:
                     engagements_chosen_details.append({
-                        "id": engagement_id,
-                        "label": matching_engagement["label"]
+                        "id": chosen_engagement["id"],
+                        "label": matching_engagement["label"],
+                        "comment": chosen_engagement.get("comment")
                     })
 
             # Ajouter les détails à la liste
@@ -115,6 +117,7 @@ def get_user_responses_by_email(email):
             })
 
     return detailed_responses
+
 
 def get_user_by_id(user_id):
     """
@@ -132,9 +135,9 @@ def update_user_responses(email, question_id, responses_chosen, engagements_chos
 
     :param email: Email de l'utilisateur.
     :param question_id: ID de la question.
-    :param responses_chosen: Liste des IDs des réponses choisies.
-    :param engagements_chosen: Liste des IDs des engagements choisis.
-    :return: True si la mise à jour a réussi, sinon False.
+    :param responses_chosen: Liste des réponses choisies (chaque élément contient `id` et optionnellement `comment`).
+    :param engagements_chosen: Liste des engagements choisis (chaque élément contient `id` et optionnellement `comment`).
+    :return: Dictionnaire avec un message de succès ou une erreur.
     """
     # Vérifier si l'utilisateur existe
     user = users_collection.find_one({"email": email})
@@ -151,18 +154,18 @@ def update_user_responses(email, question_id, responses_chosen, engagements_chos
     new_score_engagement = 0.0
 
     # Ajouter les scores des réponses choisies
-    for response_id in responses_chosen:
-        response = next((r for r in question["responsesPossible"] if r["id"] == response_id), None)
-        if response:
-            new_score_esg += response.get("scoreESG", 0.0)
-            new_score_engagement += response.get("scoreEngagement", 0.0)
+    for response in responses_chosen:
+        response_data = next((r for r in question["responsesPossible"] if r["id"] == response["id"]), None)
+        if response_data:
+            new_score_esg += response_data.get("scoreESG", 0.0)
+            new_score_engagement += response_data.get("scoreEngagement", 0.0)
 
     # Ajouter les scores des engagements choisis
-    for engagement_id in engagements_chosen:
-        engagement = next((r for r in question["responsesPossible"] if r["id"] == engagement_id), None)
-        if engagement:
-            new_score_esg += engagement.get("scoreESG", 0.0)
-            new_score_engagement += engagement.get("scoreEngagement", 0.0)
+    for engagement in engagements_chosen:
+        engagement_data = next((r for r in question["responsesPossible"] if r["id"] == engagement["id"]), None)
+        if engagement_data:
+            new_score_esg += engagement_data.get("scoreESG", 0.0)
+            new_score_engagement += engagement_data.get("scoreEngagement", 0.0)
 
     # Mettre à jour les réponses dans la base de données
     result = users_collection.update_one(
