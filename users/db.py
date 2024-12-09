@@ -128,6 +128,7 @@ def get_user_responses_by_email(email):
 
     return detailed_responses
 
+
 def get_user_by_id(user_id):
     """
     Récupérer un utilisateur par son ID.
