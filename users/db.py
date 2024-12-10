@@ -73,8 +73,6 @@ def set_boolean_esg_true(user_id):
     return result.modified_count > 0  # Retourne True si une modification a été effectuée
 
 
-
-
 def get_user_responses_by_email(email):
     """
     Récupérer les réponses d'un utilisateur avec les détails des questions en utilisant son email.
@@ -93,28 +91,30 @@ def get_user_responses_by_email(email):
         question = question_collection.find_one({"id": question_id}, {"_id": 0})
 
         if question:
-            # Récupérer les détails des réponses choisies
+            # Récupérer les détails des réponses choisies (sans scores)
             chosen_responses_details = []
-            for response_id in response.get("responsesChosen", []):
+            for chosen_response in response.get("responsesChosen", []):
                 matching_response = next(
-                    (r for r in question["responsesPossible"] if r["id"] == response_id), None
+                    (r for r in question["responsesPossible"] if r["id"] == chosen_response["id"]), None
                 )
                 if matching_response:
                     chosen_responses_details.append({
-                        "id": response_id,
-                        "label": matching_response["label"]
+                        "id": chosen_response["id"],
+                        "label": matching_response["label"],
+                        "comment": chosen_response.get("comment")
                     })
 
-            # Récupérer les détails des engagements choisis
+            # Récupérer les détails des engagements choisis (sans scores)
             engagements_chosen_details = []
-            for engagement_id in response.get("engagementsChosen", []):
+            for chosen_engagement in response.get("engagementsChosen", []):
                 matching_engagement = next(
-                    (r for r in question["responsesPossible"] if r["id"] == engagement_id), None
+                    (r for r in question["responsesPossible"] if r["id"] == chosen_engagement["id"]), None
                 )
                 if matching_engagement:
                     engagements_chosen_details.append({
-                        "id": engagement_id,
-                        "label": matching_engagement["label"]
+                        "id": chosen_engagement["id"],
+                        "label": matching_engagement["label"],
+                        "comment": chosen_engagement.get("comment")
                     })
 
             # Ajouter les détails à la liste
@@ -123,10 +123,13 @@ def get_user_responses_by_email(email):
                 "question_text": question.get("question"),
                 "responses_chosen": chosen_responses_details,
                 "engagements_chosen": engagements_chosen_details,
-                "scores": response.get("scores", {})
+                "scores": response.get("score", {})  # Inclure uniquement les scores ici
             })
 
     return detailed_responses
+
+
+
 
 
 def get_user_by_id(user_id):

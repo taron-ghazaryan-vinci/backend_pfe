@@ -2,10 +2,9 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from surveys.db import create_survey, get_engagements_clients
+from surveys.db import create_survey, get_engagements_clients, submit_one_question
 from users.db import find_user_by_email
 
-from backend_pfe.surveys.db import submit_one_question
 
 
 # Create your views here.
