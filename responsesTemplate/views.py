@@ -1,6 +1,6 @@
 from urllib import response
 from django.shortcuts import render
-from responsesTemplate.db import get_clients_responses, submit_client_response
+from responsesTemplate.db import get_client_response_for_question, get_clients_responses, submit_client_response
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
@@ -39,3 +39,13 @@ class GetClientResponsesView(APIView):
         
         except Exception as e:
             return Response({"error": str(e)}, status=500)
+        
+
+
+class ClientResponseView(APIView):
+    def get(self, request, company_id, question_id):
+        answer = get_client_response_for_question(company_id, question_id)
+        if answer is not None:
+            return Response({"answer": answer}, status=200)
+        else:
+            return Response({"answer": None}, status=200)

@@ -23,9 +23,10 @@ def get_clients_responses(company_id):
     for r in responses:
         question_id = r.get("question_id")
         question = get_question_by_id(question_id)
+        q_string = question.get("question")
         response_data = {
             "answer": r.get("answer"),
-            "question": json_util.loads(question) if question else None 
+            "question": q_string if q_string else None 
         }
         result.append(response_data)
 
