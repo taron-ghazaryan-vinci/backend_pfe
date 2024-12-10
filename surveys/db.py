@@ -1,3 +1,4 @@
+import json
 
 from backend_pfe.db import db
 from pymongo import MongoClient
@@ -23,13 +24,13 @@ def create_survey(company_email):
     
 
     ### on va chercher dans la table question toutes les questions
-    all_questions = json_util.loads(get_all_questions())
+    all_questions = get_all_questions()
     if not all_questions:
         return {"error": "No questions found"}
 
 
     survey = {
-        "company_id": company.get("_id"),
+        "company_id": str(company.get("_id")),
         "company_email": company.get("email"),
         "questions": []
     }
@@ -43,7 +44,7 @@ def create_survey(company_email):
         if any(f in filters for f in question_filters):
             ## oui => editable
             survey["questions"].append({
-                "questionId": question.get("_id"),
+                "questionId": str(question.get("_id")),
                 "question": question.get("question"),
                 "type": question.get("type"),
                 "responsesPossible": question.get("responsesPossible", []),
@@ -53,7 +54,7 @@ def create_survey(company_email):
         else:
             ## non => preFilled
             survey["questions"].append({
-                "questionId": question.get("_id"),
+                "questionId": str(question.get("_id")),
                 "question": question.get("question"),
                 "type": question.get("type"),
                 "responsesPossible": question.get("responsesPossible", []),
