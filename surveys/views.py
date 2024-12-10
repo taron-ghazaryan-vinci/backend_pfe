@@ -5,6 +5,9 @@ from rest_framework.response import Response
 from surveys.db import create_survey, get_engagements_clients
 from users.db import find_user_by_email
 
+from backend_pfe.surveys.db import submit_one_question
+
+
 # Create your views here.
 class CreateSurveyView(APIView):
     def get(self, request, company_email):
@@ -27,3 +30,36 @@ class GetEngagementsClientView(APIView):
         
         engagements = result.get("engagements", [])
         return Response({"engagements": engagements}, status=200)
+
+class SubmitListQuestionsView(APIView):
+    def post(self, request, company_email):
+        # Rechercher l'entreprise par email
+        company = find_user_by_email(company_email)
+        if not company:
+            return Response({"error": "Company not found"}, status=404)
+
+        if company.get("role") != "client":
+            return Response({"error": "Only clients can submit responses"}, status=403)
+
+        # Vérifier les données envoyées
+        data = request.data
+        if not data or not isinstance(data, list):  # Vérifier si c'est une liste
+            return Response({"error": "Data must be a list of objects"}, status=400)
+
+        # Parcourir chaque objet de la liste
+        for item in data:
+            # Valider les champs requis
+            question_id = item.get("questionId")
+            responses = item.get("responsesChosen")
+            engagements = item.get("engagementsChosen")
+
+            if not question_id or (not responses and not engagements):
+                return Response(
+                    {"error": f"Missing data for question: {item}"},
+                    status=400
+                )
+
+            # Soumettre une question
+            submit_one_question(company_email, question_id, responses, engagements)
+
+        return Response({"message": "Responses submitted successfully"}, status=200)

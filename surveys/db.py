@@ -105,6 +105,64 @@ def get_engagements_clients(company_email):
             })
 
     
-    return {"engagements": engagements}  
+    return {"engagements": engagements}
+
+def submit_one_question(company_email, question_id, responses, engagements):
+    # Rechercher l'utilisateur par email
+    company = find_user_by_email(company_email)
+    if not company:
+        return {"error": "Company not found"}
+
+    # Récupérer la question par son ID
+    question = questions_collections.find_one({"id": question_id})
+    if not question:
+        return {"error": "Question introuvable"}
+
+    # Calculer les scores pour les réponses choisies
+    score_esg = 0
+    score_engagement = 0
+
+    # Parcourir les réponses possibles et calculer les scores
+    for response_id in responses:
+        response = next((r for r in question.get('responsesPossible', []) if r['id'] == response_id), None)
+        if response:
+            score_esg += response.get('scoreESG', 0)
+
+    for engagement_id in engagements:
+        engagement = next((r for r in question.get('responsesPossible', []) if r['id'] == engagement_id), None)
+        if engagement:
+            score_engagement += engagement.get('scoreEngagement', 0)
+
+    # Obtenir ou initialiser la liste des réponses
+    responses_list = company.get('responses', [])
+
+    # Vérifier si une réponse existe déjà pour cette question
+    existing_response = next((r for r in responses_list if r["question"] == question_id), None)
+    if existing_response:
+        # Mettre à jour les réponses existantes
+        existing_response["responsesChosen"] = responses
+        existing_response["engagementsChosen"] = engagements
+        existing_response["scores"]["scoreESG"] = score_esg
+        existing_response["scores"]["scoreEngagement"] = score_engagement
+    else:
+        # Ajouter une nouvelle réponse
+        new_response = {
+            "question": question_id,
+            "responsesChosen": responses,
+            "engagementsChosen": engagements,
+            "scores": {
+                "scoreESG": score_esg,
+                "scoreEngagement": score_engagement
+            }
+        }
+        responses_list.append(new_response)
+
+    # Mettre à jour la liste des réponses dans MongoDB
+    db.users.update_one(
+        {"email": company_email},
+        {"$set": {"responses": responses_list}}
+    )
+
+    return {"message": "Response submitted successfully"}
 
 
