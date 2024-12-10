@@ -21,7 +21,7 @@ class CreateQuestionView(APIView):
 
             
 class DeleteQuestionView(APIView):
-    def post(self,request,question_id):
+    def delete(self,request,question_id):
         result = delete_question_by_id(question_id)
         if result.deleted_count == 0:
             return Response({"error": "Question introuvable"}, status=404)
