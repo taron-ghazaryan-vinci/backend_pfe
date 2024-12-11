@@ -444,3 +444,65 @@ def add_id_to_responses_chosen(user_id, question_id, response_id_to_add):
         }
     except Exception as e:
         return {"status": "error", "message": f"Une erreur s'est produite : {str(e)}"}
+
+
+def add_id_to_engagements_chosen(user_id, question_id, engagement_id_to_add):
+    """
+    Ajoute un ID spécifique dans engagementsChosen pour une question donnée
+    et met à jour le scoreEngagement.
+
+    :param user_id: ID de l'utilisateur
+    :param question_id: ID de la question
+    :param engagement_id_to_add: ID de l'engagement à ajouter
+    :return: Message de succès ou d'erreur
+    """
+    try:
+        # Trouver l'utilisateur
+        user = users_collection.find_one({"id": user_id})
+        if not user:
+            return {"status": "error", "message": "Utilisateur non trouvé."}
+
+        # Flag pour détecter une modification
+        updated = False
+
+        for response in user.get("responses", []):
+            # Vérifie si la réponse correspond à la question
+            if response.get("question") == question_id:
+                # Vérifie si l'ID existe déjà dans engagementsChosen
+                if any(item["id"] == engagement_id_to_add for item in response.get("engagementsChosen", [])):
+                    return {"status": "error", "message": f"L'ID {engagement_id_to_add} existe déjà dans engagementsChosen pour la question {question_id}."}
+
+                # Ajouter l'ID avec un commentaire vide
+                response.setdefault("engagementsChosen", []).append({"id": engagement_id_to_add, "comment": ""})
+                updated = True
+
+                # Mettre à jour scoreEngagement en fonction des engagements
+                question = question_collection.find_one({"id": question_id})
+                if question:
+                    engagements_possible = {r["id"]: r for r in question.get("responsesPossible", [])}
+                    remaining_scores = [
+                        engagements_possible[eng["id"]]["scoreEngagement"]
+                        for eng in response["engagementsChosen"]
+                        if eng["id"] in engagements_possible
+                    ]
+                    # Calcul du nouveau scoreEngagement
+                    response["scores"]["scoreEngagement"] = round(sum(remaining_scores), 2)
+
+        # Si aucune question correspondante n'a été trouvée dans les réponses
+        if not updated:
+            return {
+                "status": "error",
+                "message": f"Aucune réponse trouvée pour la question {question_id} chez l'utilisateur."
+            }
+
+        # Mettre à jour l'utilisateur dans la base de données
+        users_collection.update_one(
+            {"id": user_id},
+            {"$set": {"responses": user["responses"]}}
+        )
+        return {
+            "status": "success",
+            "message": f"L'ID {engagement_id_to_add} a été ajouté avec succès à engagementsChosen pour la question {question_id}."
+        }
+    except Exception as e:
+        return {"status": "error", "message": f"Une erreur s'est produite : {str(e)}"}

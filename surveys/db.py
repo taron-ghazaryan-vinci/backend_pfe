@@ -38,10 +38,10 @@ def create_survey(company_email):
 
     for question in all_questions:
         # filtres de la company
-        question_filters = question.get("templates",[])
+        question_filters = question.get("templates")
 
         # verifier si la question est applicable 
-        if any(f in filters for f in question_filters):
+        if any(f in question_filters for f in filters):
             ## oui => editable
             survey["questions"].append({
                 "questionId": str(question.get("_id")),
