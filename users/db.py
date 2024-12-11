@@ -319,3 +319,58 @@ def remove_id_from_responses_chosen(user_id, question_id, response_id_to_remove)
             }
     except Exception as e:
         return {"status": "error", "message": f"Une erreur s'est produite : {str(e)}"}
+
+
+
+
+
+def remove_id_from_engagements_chosen(user_id, question_id, engagement_id_to_remove):
+    """
+    Supprime un ID spécifique dans engagementChosen d'un utilisateur et met à jour le scoreEngagement.
+
+    :param user_id: ID de l'utilisateur
+    :param question_id: ID de la question correspondante
+    :param engagement_id_to_remove: ID à supprimer de engagementChosen
+    :return: Message de succès ou d'erreur
+    """
+    try:
+        # Rechercher l'utilisateur par ID
+        user = users_collection.find_one({"id": user_id})
+        if not user:
+            return {"status": "error", "message": "Utilisateur non trouvé."}
+
+        # Trouver la réponse correspondant à la question_id
+        response_to_update = next(
+            (response for response in user.get("responses", []) if response.get("question") == question_id), None
+        )
+        if not response_to_update:
+            return {"status": "error", "message": f"Aucune réponse trouvée pour la question {question_id}."}
+
+        # Supprimer l'ID dans engagementChosen
+        response_to_update["engagementsChosen"] = [
+            item for item in response_to_update.get("engagementsChosen", []) if item.get("id") != engagement_id_to_remove
+        ]
+
+        # Recalculer le scoreEngagement
+        question = question_collection.find_one({"id": question_id})
+        if not question:
+            return {"status": "error", "message": f"Question avec ID {question_id} non trouvée."}
+
+        remaining_engagements = response_to_update["engagementsChosen"]
+        updated_score_engagement = sum(
+            next((engagement["scoreEngagement"] for engagement in question["responsesPossible"] if engagement["id"] == chosen["id"]), 0)
+            for chosen in remaining_engagements
+        )
+
+        # Mettre à jour le scoreEngagement dans la réponse
+        response_to_update["scores"]["scoreEngagement"] = round(updated_score_engagement, 2)
+
+        # Mettre à jour la base de données
+        users_collection.update_one(
+            {"id": user_id},
+            {"$set": {"responses": user["responses"]}}
+        )
+
+        return {"status": "success", "message": f"L'ID {engagement_id_to_remove} a été supprimé avec succès de engagementsChosen."}
+    except Exception as e:
+        return {"status": "error", "message": f"Une erreur s'est produite : {str(e)}"}
