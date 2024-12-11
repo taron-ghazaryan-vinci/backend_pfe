@@ -2,7 +2,7 @@ from .db import (create_user, find_user_by_email, check_password, set_user_templ
                  get_user_responses_by_email, get_all_users, get_user_by_id,
                  update_user_responses, set_boolean_esg_true, remove_id_from_responses_chosen,
                  set_rapport_true, update_etat_rapport, update_etat_esg, remove_id_from_engagements_chosen,
-                 add_id_to_responses_chosen)
+                 add_id_to_responses_chosen, add_id_to_engagements_chosen)
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -361,6 +361,36 @@ class AddUserResponseIdView(APIView):
                 )
 
             result = add_id_to_responses_chosen(user_id, question_id, response_id_to_add)
+
+            if result["status"] == "error":
+                return Response({"error": result["message"]}, status=status.HTTP_400_BAD_REQUEST)
+
+            return Response({"message": result["message"]}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {"error": f"Une erreur est survenue : {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class AddUserEngagementIdView(APIView):
+    def patch(self, request):
+        """
+        Endpoint pour ajouter un ID à engagementsChosen d'un utilisateur.
+        """
+        try:
+            data = request.data
+            user_id = data.get("user_id")
+            question_id = data.get("question_id")
+            engagement_id_to_add = data.get("engagement_id")
+
+            if not user_id or not question_id or not engagement_id_to_add:
+                return Response(
+                    {"error": "Les champs user_id, question_id et engagement_id sont requis."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            result = add_id_to_engagements_chosen(user_id, question_id, engagement_id_to_add)
 
             if result["status"] == "error":
                 return Response({"error": result["message"]}, status=status.HTTP_400_BAD_REQUEST)

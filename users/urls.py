@@ -3,7 +3,7 @@ from .views import (RegisterView, LoginView, SetTemplateTrueView,
                     GetAllUsersView, GetUserByIdView, GetUserResponsesView,
                     UpdateUserResponsesView, SetBooleanESGView, RemoveUserResponseIdView,
                     SetRapportTrueView, UpdateEtatRapportView, UpdateEtatESGView, RemoveUserEngagementIdView,
-                    AddUserResponseIdView)
+                    AddUserResponseIdView, AddUserEngagementIdView)
 
 urlpatterns = [
     path('', GetAllUsersView.as_view(), name='get_all_users'),
@@ -20,5 +20,8 @@ urlpatterns = [
     path('remove-response-id/', RemoveUserResponseIdView.as_view(), name='remove_response_id'),
     path('remove-engagement-id/', RemoveUserEngagementIdView.as_view(), name='remove-engagement-id'),
     path('add-response-id/', AddUserResponseIdView.as_view(), name='add-response-id'),
+
+    path('add-engagement-id/', AddUserEngagementIdView.as_view(), name='add-engagement-id'),
+
 
 ]
