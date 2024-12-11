@@ -123,7 +123,7 @@ def get_user_responses_by_email(email):
                 "question_text": question.get("question"),
                 "responses_chosen": chosen_responses_details,
                 "engagements_chosen": engagements_chosen_details,
-                "scores": response.get("score", {})  # Inclure uniquement les scores ici
+                "scores": response.get("scores", {})  # Inclure uniquement les scores ici
             })
 
     return detailed_responses
@@ -215,3 +215,62 @@ def update_user_responses(email, question_id, responses_chosen, engagements_chos
         )
 
     return {"message": "Réponses mises à jour avec succès"}
+
+
+def remove_id_from_responses_chosen(user_id, question_id, response_id_to_remove):
+    """
+    Supprime un ID spécifique dans responsesChosen pour une question donnée
+    et met à jour le scoreESG.
+
+    :param user_id: ID de l'utilisateur
+    :param question_id: ID de la question
+    :param response_id_to_remove: ID de la réponse à supprimer
+    :return: Message de succès ou d'erreur
+    """
+    try:
+        # Trouver l'utilisateur
+        user = users_collection.find_one({"id": user_id})
+        if not user:
+            return {"status": "error", "message": "Utilisateur non trouvé."}
+
+        updated = False  # Flag pour détecter une modification
+        for response in user.get("responses", []):
+            # Vérifie si la réponse correspond à la question
+            if response.get("question") == question_id:
+                # Supprimer l'ID dans responsesChosen
+                original_length = len(response.get("responsesChosen", []))
+                response["responsesChosen"] = [
+                    item for item in response.get("responsesChosen", []) if item.get("id") != response_id_to_remove
+                ]
+                if len(response["responsesChosen"]) != original_length:
+                    updated = True
+
+                    # Mettre à jour scoreESG en fonction des réponses restantes
+                    question = question_collection.find_one({"id": question_id})
+                    if question:
+                        responses_possible = {r["id"]: r for r in question.get("responsesPossible", [])}
+                        remaining_scores = [
+                            responses_possible[res["id"]]["scoreESG"]
+                            for res in response["responsesChosen"]
+                            if res["id"] in responses_possible
+                        ]
+                        # Calcul du nouveau scoreESG
+                        response["scores"]["scoreESG"] = round(sum(remaining_scores), 2)
+
+        # Mettre à jour l'utilisateur dans la base de données uniquement si une modification a été effectuée
+        if updated:
+            users_collection.update_one(
+                {"id": user_id},
+                {"$set": {"responses": user["responses"]}}
+            )
+            return {
+                "status": "success",
+                "message": f"L'ID {response_id_to_remove} a été supprimé avec succès de responsesChosen pour la question {question_id}."
+            }
+        else:
+            return {
+                "status": "error",
+                "message": f"L'ID {response_id_to_remove} n'existe pas dans responsesChosen pour la question {question_id}."
+            }
+    except Exception as e:
+        return {"status": "error", "message": f"Une erreur s'est produite : {str(e)}"}

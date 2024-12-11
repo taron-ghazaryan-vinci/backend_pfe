@@ -3,8 +3,8 @@ from http.client import responses
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from .db import (create_user, find_user_by_email, check_password, set_user_template_true,
-                 get_user_responses_by_email,get_all_users, get_user_by_id,
-                 update_user_responses,set_boolean_esg_true)
+                 get_user_responses_by_email, get_all_users, get_user_by_id,
+                 update_user_responses, set_boolean_esg_true, remove_id_from_responses_chosen)
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -171,6 +171,7 @@ class GetUserResponsesView(APIView):
 
 
 
+
 class UpdateUserResponsesView(APIView):
     def patch(self, request):
         """
@@ -198,4 +199,33 @@ class UpdateUserResponsesView(APIView):
 
         return Response(result, status=status.HTTP_200_OK)
 
+
+class RemoveUserResponseIdView(APIView):
+    def patch(self, request):
+        """
+        Endpoint pour supprimer un ID de responsesChosen pour une question spécifique et mettre à jour le scoreESG.
+        """
+        try:
+            data = request.data
+            user_id = data.get("user_id")
+            question_id = data.get("question_id")
+            response_id_to_remove = data.get("response_id")
+
+            if not user_id or not question_id or not response_id_to_remove:
+                return Response(
+                    {"error": "Les champs user_id, question_id et response_id sont requis."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            result = remove_id_from_responses_chosen(user_id, question_id, response_id_to_remove)
+
+            if result["status"] == "error":
+                return Response({"error": result["message"]}, status=status.HTTP_400_BAD_REQUEST)
+
+            return Response({"message": result["message"]}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {"error": f"Une erreur est survenue : {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
