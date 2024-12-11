@@ -38,12 +38,15 @@ class SubmitListQuestionsView(APIView):
             return Response({"error": "Company not found"}, status=404)
 
         if company.get("role") != "client":
-            return Response({"error": "Only clients can submit responses"}, status=403)
+            return Response({"error": "Only clients can submit responses"},
+                            status=403)
 
         # Vérifier les données envoyées
         data = request.data
-        if not data or not isinstance(data, list):  # Vérifier si c'est une liste
-            return Response({"error": "Data must be a list of objects"}, status=400)
+        if not data or not isinstance(data,
+                                      list):  # Vérifier si c'est une liste
+            return Response({"error": "Data must be a list of objects"},
+                            status=400)
 
         # Parcourir chaque objet de la liste
         for item in data:
@@ -51,17 +54,23 @@ class SubmitListQuestionsView(APIView):
             question_id = item.get("questionId")
             responses = item.get("responsesChosen")
             engagements = item.get("engagementsChosen")
+            free_text = item.get(
+                "freeText")  # Ajouter la récupération du champ de texte libre
 
-            if not question_id or (not responses and not engagements):
+            if not question_id or (
+                not responses and not engagements and not free_text):
                 return Response(
                     {"error": f"Missing data for question: {item}"},
                     status=400
                 )
 
             # Soumettre une question
-            submit_one_question(company_email, question_id, responses, engagements)
+            submit_one_question(company_email, question_id, responses,
+                                engagements, free_text)
 
-        return Response({"message": "Responses submitted successfully"}, status=200)
+        return Response({"message": "Responses submitted successfully"},
+                        status=200)
+
 
 class GlobalScoreView(APIView):
     def get(self, request, company_email):

@@ -107,7 +107,7 @@ def get_engagements_clients(company_email):
     
     return {"engagements": engagements}
 
-def submit_one_question(company_email, question_id, responses, engagements):
+def submit_one_question(company_email, question_id, responses, engagements, free_text=None):
     # Rechercher l'utilisateur par email
     company = find_user_by_email(company_email)
     if not company:
@@ -142,6 +142,7 @@ def submit_one_question(company_email, question_id, responses, engagements):
         # Mettre à jour les réponses existantes
         existing_response["responsesChosen"] = responses
         existing_response["engagementsChosen"] = engagements
+        existing_response["freeText"] = free_text  # Mettre à jour le champ de texte libre
         existing_response["scores"]["scoreESG"] = score_esg
         existing_response["scores"]["scoreEngagement"] = score_engagement
     else:
@@ -150,6 +151,7 @@ def submit_one_question(company_email, question_id, responses, engagements):
             "question": question_id,
             "responsesChosen": responses,
             "engagementsChosen": engagements,
+            "freeText": free_text,  # Ajouter le champ de texte libre
             "scores": {
                 "scoreESG": score_esg,
                 "scoreEngagement": score_engagement
@@ -163,7 +165,6 @@ def submit_one_question(company_email, question_id, responses, engagements):
         {"$set": {"responses": responses_list}}
     )
 
-    return {"message": "Response submitted successfully"}
 
 
 def calculate_score_for_issue(company_email, issue_name):
