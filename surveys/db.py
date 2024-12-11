@@ -251,6 +251,8 @@ def calculate_scores_for_module(company_email, module):
 def calculate_global_score(company_email):
     """
     Calcule le score global ESG et Engagement pour un utilisateur identifié par email.
+    Renvoie les scores ESG, Engagement et global normalisés sur 90 sous forme de chaînes de caractères,
+    ainsi que le pourcentage global.
     """
     company = find_user_by_email(company_email)
     if not company:
@@ -259,23 +261,28 @@ def calculate_global_score(company_email):
     modules = ["E", "S", "G"]
     total_esg = 0
     total_engagement = 0
-    total_max_score = 0
+    total_max_score = 90  # 3 modules x 30
 
     for module in modules:
         module_scores = calculate_scores_for_module(company_email, module)
         total_esg += module_scores["total_score_esg"]
         total_engagement += module_scores["total_score_engagement"]
-        total_max_score += module_scores["max_score"]
 
-    # Score total (ESG + Engagement)
-    total_score = total_esg + total_engagement
+    total_score_global = total_esg + total_engagement
+    global_score_on_90 = (total_score_global / 180) * 90
+    score_percentage = (global_score_on_90 / total_max_score) * 100
+
+    # Conversion en chaînes de caractères
+    total_score_esg_str = f"{total_esg:.2f}/90"
+    total_score_engagement_str = f"{total_engagement:.2f}/90"
+    total_score_global_str = f"{global_score_on_90:.2f}/90"
+    score_percentage_str = f"{score_percentage:.2f}%"
 
     return {
-        "total_score_esg": total_esg,
-        "total_score_engagement": total_engagement,
-        "total_score": total_score,
-        "score_percentage": (total_score / total_max_score) * 100 if total_max_score > 0 else 0
+        "total_score_esg": total_score_esg_str,
+        "total_score_engagement": total_score_engagement_str,
+        "total_score_global": total_score_global_str,
+        "score_percentage": score_percentage_str
     }
-
 
 
