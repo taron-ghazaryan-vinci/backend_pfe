@@ -171,6 +171,7 @@ def calculate_score_for_issue(company_email, issue_name):
     """
     Calcule les scores ESG et Engagement pour un enjeu donné,
     en supposant que responsesChosen et engagementsChosen contiennent uniquement des objets.
+    Lève une erreur si un objet ne contient pas d'ID.
     """
     company = find_user_by_email(company_email)
     if not company:
@@ -197,9 +198,19 @@ def calculate_score_for_issue(company_email, issue_name):
         user_response = next((resp for resp in company["responses"] if
                               resp["question"] == question_id), None)
         if user_response:
-            # Extraire les IDs des réponses choisies
+            # Vérifier que tous les objets de responsesChosen contiennent un champ id
+            for response in user_response.get("responsesChosen", []):
+                if not isinstance(response, dict) or "id" not in response:
+                    raise ValueError(f"Invalid or missing 'id' in responsesChosen: {response}")
+
+            # Vérifier que tous les objets de engagementsChosen contiennent un champ id
+            for engagement in user_response.get("engagementsChosen", []):
+                if not isinstance(engagement, dict) or "id" not in engagement:
+                    raise ValueError(f"Invalid or missing 'id' in engagementsChosen: {engagement}")
+
+            # Extraire les IDs des réponses choisies et des engagements
             responses_chosen_ids = [resp["id"] for resp in user_response.get("responsesChosen", [])]
-            engagements_chosen_ids = [resp["id"] for resp in user_response.get("engagementsChosen", [])]
+            engagements_chosen_ids = [engagement["id"] for engagement in user_response.get("engagementsChosen", [])]
 
             # Scores ESG des réponses choisies
             total_score_esg += sum(
