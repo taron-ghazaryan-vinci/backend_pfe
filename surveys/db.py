@@ -44,7 +44,7 @@ def create_survey(company_email):
         if any(f in question_filters for f in filters):
             ## oui => editable
             survey["questions"].append({
-                "questionId": str(question.get("_id")),
+                "questionId": str(question.get("id")),
                 "question": question.get("question"),
                 "type": question.get("type"),
                 "responsesPossible": question.get("responsesPossible", []),
@@ -54,7 +54,7 @@ def create_survey(company_email):
         else:
             ## non => preFilled
             survey["questions"].append({
-                "questionId": str(question.get("_id")),
+                "questionId": str(question.get("id")),
                 "question": question.get("question"),
                 "type": question.get("type"),
                 "responsesPossible": question.get("responsesPossible", []),
