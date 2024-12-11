@@ -381,3 +381,66 @@ def remove_id_from_engagements_chosen(user_id, question_id, engagement_id_to_rem
             }
     except Exception as e:
         return {"status": "error", "message": f"Une erreur s'est produite : {str(e)}"}
+
+
+
+def add_id_to_responses_chosen(user_id, question_id, response_id_to_add):
+    """
+    Ajoute un ID spécifique dans responsesChosen pour une question donnée
+    et met à jour le scoreESG.
+
+    :param user_id: ID de l'utilisateur
+    :param question_id: ID de la question
+    :param response_id_to_add: ID de la réponse à ajouter
+    :return: Message de succès ou d'erreur
+    """
+    try:
+        # Trouver l'utilisateur
+        user = users_collection.find_one({"id": user_id})
+        if not user:
+            return {"status": "error", "message": "Utilisateur non trouvé."}
+
+        # Flag pour détecter une modification
+        updated = False
+
+        for response in user.get("responses", []):
+            # Vérifie si la réponse correspond à la question
+            if response.get("question") == question_id:
+                # Vérifie si l'ID existe déjà dans responsesChosen
+                if any(item["id"] == response_id_to_add for item in response.get("responsesChosen", [])):
+                    return {"status": "error", "message": f"L'ID {response_id_to_add} existe déjà dans responsesChosen pour la question {question_id}."}
+
+                # Ajouter l'ID avec un commentaire vide
+                response.setdefault("responsesChosen", []).append({"id": response_id_to_add, "comment": ""})
+                updated = True
+
+                # Mettre à jour scoreESG en fonction des réponses
+                question = question_collection.find_one({"id": question_id})
+                if question:
+                    responses_possible = {r["id"]: r for r in question.get("responsesPossible", [])}
+                    remaining_scores = [
+                        responses_possible[res["id"]]["scoreESG"]
+                        for res in response["responsesChosen"]
+                        if res["id"] in responses_possible
+                    ]
+                    # Calcul du nouveau scoreESG
+                    response["scores"]["scoreESG"] = round(sum(remaining_scores), 2)
+
+        # Si aucune question correspondante n'a été trouvée dans les réponses
+        if not updated:
+            return {
+                "status": "error",
+                "message": f"Aucune réponse trouvée pour la question {question_id} chez l'utilisateur."
+            }
+
+        # Mettre à jour l'utilisateur dans la base de données
+        users_collection.update_one(
+            {"id": user_id},
+            {"$set": {"responses": user["responses"]}}
+        )
+        return {
+            "status": "success",
+            "message": f"L'ID {response_id_to_add} a été ajouté avec succès à responsesChosen pour la question {question_id}."
+        }
+    except Exception as e:
+        return {"status": "error", "message": f"Une erreur s'est produite : {str(e)}"}
