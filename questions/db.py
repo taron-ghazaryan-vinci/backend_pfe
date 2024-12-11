@@ -11,7 +11,7 @@ from pymongo import MongoClient
 
 import uuid
 
-def create_multiple_choice_question(enjeu, question_text, templates, responses):
+def create_multiple_choice_question(enjeu, question_text, templates, responses, esg):
     """
     Créer une question de type choixMultiple avec un ID unique.
     """
@@ -22,11 +22,14 @@ def create_multiple_choice_question(enjeu, question_text, templates, responses):
         {
             "id": str(i + 1),
             "label": response.get('label'),
-            "scoreESG": response.get('scoreESG'),
-            "scoreEngagement": response.get('scoreEngagement')
+            "scoreESG": response.get('scoreESG', 0.0),  # Par défaut, scoreESG = 0.0 si non fourni
+            "scoreEngagement": response.get('scoreEngagement', 0.0)  # Par défaut, scoreEngagement = 0.0 si non fourni
         }
         for i, response in enumerate(responses)
     ]
+
+    # Calcul du scoreTotal : somme des scoresESG des réponses possibles divisé par 2
+    score_total = sum(response.get('scoreESG', 0.0) for response in responses_possible) / 2
 
     question = {
         "id": question_id,
@@ -34,7 +37,9 @@ def create_multiple_choice_question(enjeu, question_text, templates, responses):
         "question": question_text,
         "templates": templates,
         "type": "choixMultiples",
-        "responsesPossible": responses_possible
+        "responsesPossible": responses_possible,
+        "ESG": esg,
+        "scoreTotal": score_total,
     }
 
     questions_collection.insert_one(question)
@@ -42,11 +47,13 @@ def create_multiple_choice_question(enjeu, question_text, templates, responses):
 
 
 
-def create_open_question(enjeu, question_text, templates):
+
+def create_open_question(enjeu, question_text, templates, esg):
     """
     Créer une question de type ouverte avec un ID unique.
     Une seule réponse possible est prévue, initialement vide.
     Les scores ESG et Engagement sont initialisés à 0.00.
+    Le scoreTotal est fixé à 0.00 par défaut pour les questions ouvertes.
     """
     question_id = str(uuid.uuid4())  # Générer un ID unique
 
@@ -59,15 +66,18 @@ def create_open_question(enjeu, question_text, templates):
         "responsesPossible": [
             {
                 "id": "1",
-                "label": "",
+                "label": "",  # Réponse initialement vide
                 "scoreESG": 0.00,
                 "scoreEngagement": 0.00
             }
-        ]
+        ],
+        "ESG": esg,
+        "scoreTotal": 0.00
     }
 
     questions_collection.insert_one(question)
     return question_id
+
 
 
 def delete_question_by_id(question_id):

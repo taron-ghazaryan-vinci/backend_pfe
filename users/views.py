@@ -1,7 +1,3 @@
-from http.client import responses
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
 from .db import (create_user, find_user_by_email, check_password, set_user_template_true,
                  get_user_responses_by_email,get_all_users, get_user_by_id,
                  update_user_responses,set_boolean_esg_true)
