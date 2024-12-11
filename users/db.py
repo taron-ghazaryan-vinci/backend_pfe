@@ -34,9 +34,39 @@ def create_user(username, email, password, role):
         "template": False,
         "templates": None,
         "responses": [],
-        "boolean_esg": False
+        "boolean_esg": False,
+        "rapport" : False,
+        "etat_rapport": None,
+        "etat_esg" : None
     }
     return users_collection.insert_one(user).inserted_id
+
+def update_etat_rapport(user_id, new_etat_rapport):
+    """
+    Mettre à jour le champ 'etat_rapport' d'un utilisateur avec une nouvelle valeur.
+    """
+    try:
+        result = users_collection.update_one(
+            {"id": user_id},  # Rechercher l'utilisateur par ID
+            {"$set": {"etat_rapport": new_etat_rapport}}  # Mettre à jour 'etat_rapport'
+        )
+        return result.matched_count > 0  # Retourne True si la mise à jour a été effectuée
+    except Exception as e:
+        raise Exception(f"Erreur lors de la mise à jour de l'état du rapport : {str(e)}")
+
+def update_etat_esg(user_id, new_etat_esg):
+    """
+    Mettre à jour le champ 'etat_esg' d'un utilisateur avec une nouvelle valeur.
+    """
+    try:
+        result = users_collection.update_one(
+            {"id": user_id},  # Rechercher l'utilisateur par ID
+            {"$set": {"etat_esg": new_etat_esg}}  # Mettre à jour 'etat_esg'
+        )
+        return result.matched_count > 0  # Retourne True si la mise à jour a été effectuée
+    except Exception as e:
+        raise Exception(f"Erreur lors de la mise à jour de l'état ESG : {str(e)}")
+
 
 def find_user_by_email(email):
     """Rechercher un utilisateur par email"""
@@ -71,6 +101,21 @@ def set_boolean_esg_true(user_id):
         {"$set": {"boolean_esg": True}}
     )
     return result.modified_count > 0  # Retourne True si une modification a été effectuée
+
+
+def set_rapport_true(user_id):
+    """
+    Mettre à jour le champ 'rapport' d'un utilisateur à True.
+    """
+    try:
+        result = users_collection.update_one(
+            {"id": user_id},
+            {"$set": {"rapport": True}}
+        )
+        return result.matched_count > 0
+    except Exception as e:
+        raise Exception(f"Erreur lors de la mise à jour : {str(e)}")
+
 
 
 def get_user_responses_by_email(email):
@@ -274,6 +319,8 @@ def remove_id_from_responses_chosen(user_id, question_id, response_id_to_remove)
             }
     except Exception as e:
         return {"status": "error", "message": f"Une erreur s'est produite : {str(e)}"}
+
+
 
 
 
