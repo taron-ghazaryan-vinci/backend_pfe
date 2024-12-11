@@ -168,6 +168,7 @@ def get_user_responses_by_email(email):
                 "question_text": question.get("question"),
                 "responses_chosen": chosen_responses_details,
                 "engagements_chosen": engagements_chosen_details,
+                "freeText" : response.get("freeText", ""),
                 "scores": response.get("scores", {})  # Inclure uniquement les scores ici
             })
 
