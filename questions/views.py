@@ -19,16 +19,17 @@ class CreateMultipleChoiceQuestionView(APIView):
             # Validation des données
             enjeu = data.get('enjeu')
             question_text = data.get('question')
-            templates = data.get('templates', [])
+            templates = data.get('templates')
             responses = data.get('responses', [])
+            esg = data.get('esg')
 
-            if not enjeu or not question_text or not templates or not responses:
+            if not enjeu or not question_text or not templates or not responses or not esg:
                 return Response(
-                    {"error": "Tous les champs sont requis : enjeu, question, templates, responses"},
+                    {"error": "Tous les champs sont requis : enjeu, question, templates, responses, esg"},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
-            # Vérification des réponses pour s'assurer qu'elles contiennent les champs nécessaires
+            # Validation des réponses
             for response in responses:
                 if not isinstance(response, dict) or 'label' not in response or 'scoreESG' not in response or 'scoreEngagement' not in response:
                     return Response(
@@ -36,16 +37,22 @@ class CreateMultipleChoiceQuestionView(APIView):
                         status=status.HTTP_400_BAD_REQUEST
                     )
 
-            question_id = create_multiple_choice_question(enjeu, question_text, templates, responses)
+            # Appeler la méthode pour créer la question
+            question_id = create_multiple_choice_question(enjeu, question_text, templates, responses, esg)
+
+            # Calcul du scoreTotal (sum(scoreESG) / 2)
+            score_total = sum(resp.get('scoreESG', 0) for resp in responses) / 2
 
             # Récupérer les données de la question créée
             question_data = {
-                "id": str(question_id),
+                "id": question_id,
                 "enjeu": enjeu,
                 "question": question_text,
                 "templates": templates,
+                "type": "choixMultiples",
                 "responsesPossible": responses,
-                "type": "choixMultiples"
+                "ESG": esg,
+                "scoreTotal": round(score_total, 2)
             }
 
             return Response(
@@ -60,6 +67,7 @@ class CreateMultipleChoiceQuestionView(APIView):
 
 
 
+
 class CreateOpenQuestionView(APIView):
     def post(self, request):
         """
@@ -70,16 +78,17 @@ class CreateOpenQuestionView(APIView):
             # Validation des données
             enjeu = data.get('enjeu')
             question_text = data.get('question')
-            templates = data.get('templates', [])
+            templates = data.get('templates')
+            esg = data.get('esg')
 
-            if not enjeu or not question_text or not templates:
+            if not enjeu or not question_text or not templates or not esg:
                 return Response(
-                    {"error": "Tous les champs sont requis : enjeu, question, templates"},
+                    {"error": "Tous les champs sont requis : enjeu, question, templates, esg"},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
             # Appeler la méthode pour créer la question
-            question_id = create_open_question(enjeu, question_text, templates)
+            question_id = create_open_question(enjeu, question_text, templates, esg)
 
             # Récupérer les données de la question créée
             question_data = {
@@ -88,6 +97,7 @@ class CreateOpenQuestionView(APIView):
                 "question": question_text,
                 "templates": templates,
                 "type": "ouverte",
+                "ESG": esg,
                 "responsesPossible": [
                     {
                         "id": "1",
@@ -107,6 +117,7 @@ class CreateOpenQuestionView(APIView):
                 {"error": f"Une erreur est survenue : {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
 
 
 
