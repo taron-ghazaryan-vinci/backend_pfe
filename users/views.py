@@ -1,6 +1,8 @@
 from .db import (create_user, find_user_by_email, check_password, set_user_template_true,
-                 get_user_responses_by_email,get_all_users, get_user_by_id,
-                 update_user_responses,set_boolean_esg_true)
+                 get_user_responses_by_email, get_all_users, get_user_by_id,
+                 update_user_responses, set_boolean_esg_true, remove_id_from_responses_chosen,
+                 set_rapport_true, update_etat_rapport, update_etat_esg, remove_id_from_engagements_chosen,
+                 add_id_to_responses_chosen, add_id_to_engagements_chosen)
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -80,6 +82,91 @@ class SetTemplateTrueView(APIView):
             return Response({"message": "Template mis à jour à True avec succès"}, status=status.HTTP_200_OK)
         else:
             return Response({"error": "Utilisateur non trouvé ou aucune mise à jour effectuée"}, status=status.HTTP_404_NOT_FOUND)
+
+class SetRapportTrueView(APIView):
+    def patch(self, request, user_id):
+        """
+        Endpoint pour mettre à jour le champ 'rapport' à True.
+        """
+        try:
+            success = set_rapport_true(user_id)
+            if not success:
+                return Response(
+                    {"error": "Utilisateur non trouvé ou mise à jour échouée."},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            return Response(
+                {"message": "Champ 'rapport' mis à jour avec succès."},
+                status=status.HTTP_200_OK
+            )
+        except Exception as e:
+            return Response(
+                {"error": f"Une erreur est survenue : {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+class UpdateEtatRapportView(APIView):
+    def patch(self, request, user_id):
+        """
+        Endpoint pour mettre à jour le champ 'etat_rapport' d'un utilisateur.
+        """
+        try:
+            new_etat_rapport = request.data.get("etat_rapport")
+            if not new_etat_rapport:
+                return Response(
+                    {"error": "Le champ 'etat_rapport' est requis."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            success = update_etat_rapport(user_id, new_etat_rapport)
+            if not success:
+                return Response(
+                    {"error": "Utilisateur non trouvé ou mise à jour échouée."},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            return Response(
+                {"message": "Champ 'etat_rapport' mis à jour avec succès."},
+                status=status.HTTP_200_OK
+            )
+        except Exception as e:
+            return Response(
+                {"error": f"Une erreur est survenue : {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class UpdateEtatESGView(APIView):
+    def patch(self, request, user_id):
+        """
+        Endpoint pour mettre à jour le champ 'etat_esg' d'un utilisateur.
+        """
+        try:
+            new_etat_esg = request.data.get("etat_esg")
+            if not new_etat_esg:
+                return Response(
+                    {"error": "Le champ 'etat_esg' est requis."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            success = update_etat_esg(user_id, new_etat_esg)
+            if not success:
+                return Response(
+                    {"error": "Utilisateur non trouvé ou mise à jour échouée."},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            return Response(
+                {"message": "Champ 'etat_esg' mis à jour avec succès."},
+                status=status.HTTP_200_OK
+            )
+        except Exception as e:
+            return Response(
+                {"error": f"Une erreur est survenue : {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
 
 class SetBooleanESGView(APIView):
     def patch(self, request, user_id):
@@ -167,6 +254,7 @@ class GetUserResponsesView(APIView):
 
 
 
+
 class UpdateUserResponsesView(APIView):
     def patch(self, request):
         """
@@ -195,3 +283,121 @@ class UpdateUserResponsesView(APIView):
         return Response(result, status=status.HTTP_200_OK)
 
 
+class RemoveUserResponseIdView(APIView):
+    def patch(self, request):
+        """
+        Endpoint pour supprimer un ID de responsesChosen pour une question spécifique et mettre à jour le scoreESG.
+        """
+        try:
+            data = request.data
+            user_id = data.get("user_id")
+            question_id = data.get("question_id")
+            response_id_to_remove = data.get("response_id")
+
+            if not user_id or not question_id or not response_id_to_remove:
+                return Response(
+                    {"error": "Les champs user_id, question_id et response_id sont requis."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            result = remove_id_from_responses_chosen(user_id, question_id, response_id_to_remove)
+
+            if result["status"] == "error":
+                return Response({"error": result["message"]}, status=status.HTTP_400_BAD_REQUEST)
+
+            return Response({"message": result["message"]}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {"error": f"Une erreur est survenue : {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class RemoveUserEngagementIdView(APIView):
+    def patch(self, request):
+        """
+        Endpoint pour supprimer un ID de engagementsChosen d'un utilisateur.
+        """
+        try:
+            data = request.data
+            user_id = data.get("user_id")
+            question_id = data.get("question_id")
+            engagement_id_to_remove = data.get("engagement_id")
+
+            if not user_id or not question_id or not engagement_id_to_remove:
+                return Response(
+                    {"error": "Les champs user_id, question_id et engagement_id sont requis."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            result = remove_id_from_engagements_chosen(user_id, question_id, engagement_id_to_remove)
+
+            if result["status"] == "error":
+                return Response({"error": result["message"]}, status=status.HTTP_400_BAD_REQUEST)
+
+            return Response({"message": result["message"]}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {"error": f"Une erreur est survenue : {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class AddUserResponseIdView(APIView):
+    def patch(self, request):
+        """
+        Endpoint pour ajouter un ID à responsesChosen d'un utilisateur.
+        """
+        try:
+            data = request.data
+            user_id = data.get("user_id")
+            question_id = data.get("question_id")
+            response_id_to_add = data.get("response_id")
+
+            if not user_id or not question_id or not response_id_to_add:
+                return Response(
+                    {"error": "Les champs user_id, question_id et response_id sont requis."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            result = add_id_to_responses_chosen(user_id, question_id, response_id_to_add)
+
+            if result["status"] == "error":
+                return Response({"error": result["message"]}, status=status.HTTP_400_BAD_REQUEST)
+
+            return Response({"message": result["message"]}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {"error": f"Une erreur est survenue : {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class AddUserEngagementIdView(APIView):
+    def patch(self, request):
+        """
+        Endpoint pour ajouter un ID à engagementsChosen d'un utilisateur.
+        """
+        try:
+            data = request.data
+            user_id = data.get("user_id")
+            question_id = data.get("question_id")
+            engagement_id_to_add = data.get("engagement_id")
+
+            if not user_id or not question_id or not engagement_id_to_add:
+                return Response(
+                    {"error": "Les champs user_id, question_id et engagement_id sont requis."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            result = add_id_to_engagements_chosen(user_id, question_id, engagement_id_to_add)
+
+            if result["status"] == "error":
+                return Response({"error": result["message"]}, status=status.HTTP_400_BAD_REQUEST)
+
+            return Response({"message": result["message"]}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {"error": f"Une erreur est survenue : {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

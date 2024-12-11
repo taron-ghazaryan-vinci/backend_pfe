@@ -166,3 +166,123 @@ def submit_one_question(company_email, question_id, responses, engagements):
     return {"message": "Response submitted successfully"}
 
 
+def calculate_score_for_issue(company_email, issue_name):
+    """
+    Calcule les scores ESG et Engagement pour un enjeu donné, en ignorant les questions sans score.
+    """
+    company = find_user_by_email(company_email)
+    if not company:
+        return {"error": "Company not found"}
+
+    questions = db.questions.find({"enjeu": issue_name})
+    print(questions)
+
+    total_score_esg = 0
+    total_score_engagement = 0
+    max_score = 0
+
+    for question in questions:
+        question_id = question["id"]
+
+        # Vérifier si la question a un score total
+        if "scoreTotal" not in question or question["scoreTotal"] == 0:
+            continue  # Ignorer cette question
+
+        # Ajouter le score total de la question au maximum de l'enjeu
+        max_score += question["scoreTotal"]
+
+        # Récupérer les réponses de l'utilisateur pour cette question
+        user_response = next((resp for resp in company["responses"] if
+                              resp["question"] == question_id), None)
+        if user_response:
+            # Scores ESG des réponses choisies
+            total_score_esg += sum(
+                next((resp["scoreESG"] for resp in
+                      question.get("responsesPossible", []) if
+                      resp["id"] == chosen_id), 0)
+                for chosen_id in user_response.get("responsesChosen", [])
+            ) / 2
+            # Scores Engagement des engagements pris
+            total_score_engagement += sum(
+                next((resp["scoreEngagement"] for resp in
+                      question.get("responsesPossible", []) if
+                      resp["id"] == chosen_id), 0)
+                for chosen_id in user_response.get("engagementsChosen", [])
+            ) / 2
+
+    # Facteur de normalisation pour ajuster sur 5
+    normalization_factor = 5 / max_score if max_score > 0 else 1
+
+    # Normaliser les scores obtenus
+    normalized_esg = total_score_esg * normalization_factor
+    normalized_engagement = total_score_engagement * normalization_factor
+
+    return {
+        "issue": issue_name,
+        "normalized_score_esg": normalized_esg,
+        "normalized_score_engagement": normalized_engagement,
+        "max_score": 5  # L'enjeu est toujours sur 5
+    }
+
+def calculate_scores_for_module(company_email, module):
+    """
+    Calcule les scores ESG et Engagement pour un module, en normalisant chaque enjeu sur 5.
+    """
+    company = find_user_by_email(company_email)
+    if not company:
+        return {"error": "Company not found"}
+
+    issues = db.questions.distinct("enjeu", {"ESG": module})
+    total_esg = 0
+    total_engagement = 0
+
+    for issue in issues:
+        issue_scores = calculate_score_for_issue(company_email, issue)
+        total_esg += issue_scores["normalized_score_esg"]
+        total_engagement += issue_scores["normalized_score_engagement"]
+
+    return {
+        "module": module,
+        "total_score_esg": total_esg,  # Somme des scores ESG normalisés pour les 6 enjeux
+        "total_score_engagement": total_engagement,  # Somme des scores Engagement normalisés pour les 6 enjeux
+        "max_score": 30  # Chaque module est sur 30 (6 x 5)
+    }
+
+def calculate_global_score(company_email):
+    """
+    Calcule le score global ESG et Engagement pour un utilisateur identifié par email.
+    Renvoie les scores ESG, Engagement et global normalisés sur 90 sous forme de chaînes de caractères,
+    ainsi que le pourcentage global.
+    """
+    company = find_user_by_email(company_email)
+    if not company:
+        return {"error": "Company not found"}
+
+    modules = ["E", "S", "G"]
+    total_esg = 0
+    total_engagement = 0
+    total_max_score = 90  # 3 modules x 30
+
+    for module in modules:
+        module_scores = calculate_scores_for_module(company_email, module)
+        total_esg += module_scores["total_score_esg"]
+        total_engagement += module_scores["total_score_engagement"]
+
+    total_score_global = total_esg + total_engagement
+    global_score_on_90 = (total_score_global / 180) * 90
+    score_percentage = (global_score_on_90 / total_max_score) * 100
+
+    # Conversion en chaînes de caractères
+    total_score_esg_str = f"{total_esg:.2f}/90"
+    total_score_engagement_str = f"{total_engagement:.2f}/90"
+    total_score_global_str = f"{global_score_on_90:.2f}/90"
+    score_percentage_str = f"{score_percentage:.2f}%"
+
+    return {
+        "total_score_esg": total_score_esg_str,
+        "total_score_engagement": total_score_engagement_str,
+        "total_score_global": total_score_global_str,
+        "score_percentage": score_percentage_str
+    }
+
+

@@ -34,9 +34,39 @@ def create_user(username, email, password, role):
         "template": False,
         "templates": None,
         "responses": [],
-        "boolean_esg": False
+        "boolean_esg": False,
+        "rapport" : False,
+        "etat_rapport": None,
+        "etat_esg" : None
     }
     return users_collection.insert_one(user).inserted_id
+
+def update_etat_rapport(user_id, new_etat_rapport):
+    """
+    Mettre à jour le champ 'etat_rapport' d'un utilisateur avec une nouvelle valeur.
+    """
+    try:
+        result = users_collection.update_one(
+            {"id": user_id},  # Rechercher l'utilisateur par ID
+            {"$set": {"etat_rapport": new_etat_rapport}}  # Mettre à jour 'etat_rapport'
+        )
+        return result.matched_count > 0  # Retourne True si la mise à jour a été effectuée
+    except Exception as e:
+        raise Exception(f"Erreur lors de la mise à jour de l'état du rapport : {str(e)}")
+
+def update_etat_esg(user_id, new_etat_esg):
+    """
+    Mettre à jour le champ 'etat_esg' d'un utilisateur avec une nouvelle valeur.
+    """
+    try:
+        result = users_collection.update_one(
+            {"id": user_id},  # Rechercher l'utilisateur par ID
+            {"$set": {"etat_esg": new_etat_esg}}  # Mettre à jour 'etat_esg'
+        )
+        return result.matched_count > 0  # Retourne True si la mise à jour a été effectuée
+    except Exception as e:
+        raise Exception(f"Erreur lors de la mise à jour de l'état ESG : {str(e)}")
+
 
 def find_user_by_email(email):
     """Rechercher un utilisateur par email"""
@@ -71,6 +101,21 @@ def set_boolean_esg_true(user_id):
         {"$set": {"boolean_esg": True}}
     )
     return result.modified_count > 0  # Retourne True si une modification a été effectuée
+
+
+def set_rapport_true(user_id):
+    """
+    Mettre à jour le champ 'rapport' d'un utilisateur à True.
+    """
+    try:
+        result = users_collection.update_one(
+            {"id": user_id},
+            {"$set": {"rapport": True}}
+        )
+        return result.matched_count > 0
+    except Exception as e:
+        raise Exception(f"Erreur lors de la mise à jour : {str(e)}")
+
 
 
 def get_user_responses_by_email(email):
@@ -123,7 +168,7 @@ def get_user_responses_by_email(email):
                 "question_text": question.get("question"),
                 "responses_chosen": chosen_responses_details,
                 "engagements_chosen": engagements_chosen_details,
-                "scores": response.get("score", {})  # Inclure uniquement les scores ici
+                "scores": response.get("scores", {})  # Inclure uniquement les scores ici
             })
 
     return detailed_responses
@@ -215,3 +260,249 @@ def update_user_responses(email, question_id, responses_chosen, engagements_chos
         )
 
     return {"message": "Réponses mises à jour avec succès"}
+
+
+def remove_id_from_responses_chosen(user_id, question_id, response_id_to_remove):
+    """
+    Supprime un ID spécifique dans responsesChosen pour une question donnée
+    et met à jour le scoreESG.
+
+    :param user_id: ID de l'utilisateur
+    :param question_id: ID de la question
+    :param response_id_to_remove: ID de la réponse à supprimer
+    :return: Message de succès ou d'erreur
+    """
+    try:
+        # Trouver l'utilisateur
+        user = users_collection.find_one({"id": user_id})
+        if not user:
+            return {"status": "error", "message": "Utilisateur non trouvé."}
+
+        updated = False  # Flag pour détecter une modification
+        for response in user.get("responses", []):
+            # Vérifie si la réponse correspond à la question
+            if response.get("question") == question_id:
+                # Supprimer l'ID dans responsesChosen
+                original_length = len(response.get("responsesChosen", []))
+                response["responsesChosen"] = [
+                    item for item in response.get("responsesChosen", []) if item.get("id") != response_id_to_remove
+                ]
+                if len(response["responsesChosen"]) != original_length:
+                    updated = True
+
+                    # Mettre à jour scoreESG en fonction des réponses restantes
+                    question = question_collection.find_one({"id": question_id})
+                    if question:
+                        responses_possible = {r["id"]: r for r in question.get("responsesPossible", [])}
+                        remaining_scores = [
+                            responses_possible[res["id"]]["scoreESG"]
+                            for res in response["responsesChosen"]
+                            if res["id"] in responses_possible
+                        ]
+                        # Calcul du nouveau scoreESG
+                        response["scores"]["scoreESG"] = round(sum(remaining_scores), 2)
+
+        # Mettre à jour l'utilisateur dans la base de données uniquement si une modification a été effectuée
+        if updated:
+            users_collection.update_one(
+                {"id": user_id},
+                {"$set": {"responses": user["responses"]}}
+            )
+            return {
+                "status": "success",
+                "message": f"L'ID {response_id_to_remove} a été supprimé avec succès de responsesChosen pour la question {question_id}."
+            }
+        else:
+            return {
+                "status": "error",
+                "message": f"L'ID {response_id_to_remove} n'existe pas dans responsesChosen pour la question {question_id}."
+            }
+    except Exception as e:
+        return {"status": "error", "message": f"Une erreur s'est produite : {str(e)}"}
+
+
+
+
+
+def remove_id_from_engagements_chosen(user_id, question_id, engagement_id_to_remove):
+    """
+    Supprime un ID spécifique dans engagementChosen pour une question donnée
+    et met à jour le scoreEngagement.
+
+    :param user_id: ID de l'utilisateur
+    :param question_id: ID de la question
+    :param engagement_id_to_remove: ID de l'engagement à supprimer
+    :return: Message de succès ou d'erreur
+    """
+    try:
+        # Trouver l'utilisateur
+        user = users_collection.find_one({"id": user_id})
+        if not user:
+            return {"status": "error", "message": "Utilisateur non trouvé."}
+
+        updated = False  # Flag pour détecter une modification
+        for response in user.get("responses", []):
+            # Vérifie si la réponse correspond à la question
+            if response.get("question") == question_id:
+                # Supprimer l'ID dans engagementChosen
+                original_length = len(response.get("engagementsChosen", []))
+                response["engagementsChosen"] = [
+                    item for item in response.get("engagementsChosen", []) if item.get("id") != engagement_id_to_remove
+                ]
+                if len(response["engagementsChosen"]) != original_length:
+                    updated = True
+
+                    # Mettre à jour scoreEngagement en fonction des engagements restants
+                    question = question_collection.find_one({"id": question_id})
+                    if question:
+                        engagements_possible = {r["id"]: r for r in question.get("responsesPossible", [])}
+                        remaining_scores = [
+                            engagements_possible[eng["id"]]["scoreEngagement"]
+                            for eng in response["engagementsChosen"]
+                            if eng["id"] in engagements_possible
+                        ]
+                        # Calcul du nouveau scoreEngagement
+                        response["scores"]["scoreEngagement"] = round(sum(remaining_scores), 2)
+
+        # Mettre à jour l'utilisateur dans la base de données uniquement si une modification a été effectuée
+        if updated:
+            users_collection.update_one(
+                {"id": user_id},
+                {"$set": {"responses": user["responses"]}}
+            )
+            return {
+                "status": "success",
+                "message": f"L'ID {engagement_id_to_remove} a été supprimé avec succès de engagementChosen pour la question {question_id}."
+            }
+        else:
+            return {
+                "status": "error",
+                "message": f"L'ID {engagement_id_to_remove} n'existe pas dans engagementChosen pour la question {question_id}."
+            }
+    except Exception as e:
+        return {"status": "error", "message": f"Une erreur s'est produite : {str(e)}"}
+
+
+
+def add_id_to_responses_chosen(user_id, question_id, response_id_to_add):
+    """
+    Ajoute un ID spécifique dans responsesChosen pour une question donnée
+    et met à jour le scoreESG.
+
+    :param user_id: ID de l'utilisateur
+    :param question_id: ID de la question
+    :param response_id_to_add: ID de la réponse à ajouter
+    :return: Message de succès ou d'erreur
+    """
+    try:
+        # Trouver l'utilisateur
+        user = users_collection.find_one({"id": user_id})
+        if not user:
+            return {"status": "error", "message": "Utilisateur non trouvé."}
+
+        # Flag pour détecter une modification
+        updated = False
+
+        for response in user.get("responses", []):
+            # Vérifie si la réponse correspond à la question
+            if response.get("question") == question_id:
+                # Vérifie si l'ID existe déjà dans responsesChosen
+                if any(item["id"] == response_id_to_add for item in response.get("responsesChosen", [])):
+                    return {"status": "error", "message": f"L'ID {response_id_to_add} existe déjà dans responsesChosen pour la question {question_id}."}
+
+                # Ajouter l'ID avec un commentaire vide
+                response.setdefault("responsesChosen", []).append({"id": response_id_to_add, "comment": ""})
+                updated = True
+
+                # Mettre à jour scoreESG en fonction des réponses
+                question = question_collection.find_one({"id": question_id})
+                if question:
+                    responses_possible = {r["id"]: r for r in question.get("responsesPossible", [])}
+                    remaining_scores = [
+                        responses_possible[res["id"]]["scoreESG"]
+                        for res in response["responsesChosen"]
+                        if res["id"] in responses_possible
+                    ]
+                    # Calcul du nouveau scoreESG
+                    response["scores"]["scoreESG"] = round(sum(remaining_scores), 2)
+
+        # Si aucune question correspondante n'a été trouvée dans les réponses
+        if not updated:
+            return {
+                "status": "error",
+                "message": f"Aucune réponse trouvée pour la question {question_id} chez l'utilisateur."
+            }
+
+        # Mettre à jour l'utilisateur dans la base de données
+        users_collection.update_one(
+            {"id": user_id},
+            {"$set": {"responses": user["responses"]}}
+        )
+        return {
+            "status": "success",
+            "message": f"L'ID {response_id_to_add} a été ajouté avec succès à responsesChosen pour la question {question_id}."
+        }
+    except Exception as e:
+        return {"status": "error", "message": f"Une erreur s'est produite : {str(e)}"}
+
+
+def add_id_to_engagements_chosen(user_id, question_id, engagement_id_to_add):
+    """
+    Ajoute un ID spécifique dans engagementsChosen pour une question donnée
+    et met à jour le scoreEngagement.
+
+    :param user_id: ID de l'utilisateur
+    :param question_id: ID de la question
+    :param engagement_id_to_add: ID de l'engagement à ajouter
+    :return: Message de succès ou d'erreur
+    """
+    try:
+        # Trouver l'utilisateur
+        user = users_collection.find_one({"id": user_id})
+        if not user:
+            return {"status": "error", "message": "Utilisateur non trouvé."}
+
+        # Flag pour détecter une modification
+        updated = False
+
+        for response in user.get("responses", []):
+            # Vérifie si la réponse correspond à la question
+            if response.get("question") == question_id:
+                # Vérifie si l'ID existe déjà dans engagementsChosen
+                if any(item["id"] == engagement_id_to_add for item in response.get("engagementsChosen", [])):
+                    return {"status": "error", "message": f"L'ID {engagement_id_to_add} existe déjà dans engagementsChosen pour la question {question_id}."}
+
+                # Ajouter l'ID avec un commentaire vide
+                response.setdefault("engagementsChosen", []).append({"id": engagement_id_to_add, "comment": ""})
+                updated = True
+
+                # Mettre à jour scoreEngagement en fonction des engagements
+                question = question_collection.find_one({"id": question_id})
+                if question:
+                    engagements_possible = {r["id"]: r for r in question.get("responsesPossible", [])}
+                    remaining_scores = [
+                        engagements_possible[eng["id"]]["scoreEngagement"]
+                        for eng in response["engagementsChosen"]
+                        if eng["id"] in engagements_possible
+                    ]
+                    # Calcul du nouveau scoreEngagement
+                    response["scores"]["scoreEngagement"] = round(sum(remaining_scores), 2)
+
+        # Si aucune question correspondante n'a été trouvée dans les réponses
+        if not updated:
+            return {
+                "status": "error",
+                "message": f"Aucune réponse trouvée pour la question {question_id} chez l'utilisateur."
+            }
+
+        # Mettre à jour l'utilisateur dans la base de données
+        users_collection.update_one(
+            {"id": user_id},
+            {"$set": {"responses": user["responses"]}}
+        )
+        return {
+            "status": "success",
+            "message": f"L'ID {engagement_id_to_add} a été ajouté avec succès à engagementsChosen pour la question {question_id}."
+        }
+    except Exception as e:
+        return {"status": "error", "message": f"Une erreur s'est produite : {str(e)}"}
