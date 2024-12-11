@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import (RegisterView, LoginView, SetTemplateTrueView,
                     GetAllUsersView, GetUserByIdView, GetUserResponsesView,
-                    UpdateUserResponsesView, SetBooleanESGView, RemoveUserResponseIdView)
+                    UpdateUserResponsesView, SetBooleanESGView, RemoveUserResponseIdView, RemoveUserEngagementIdView)
 
 urlpatterns = [
     path('', GetAllUsersView.as_view(), name='get_all_users'),
@@ -13,5 +13,7 @@ urlpatterns = [
     path('user-responses/<str:email>/', GetUserResponsesView.as_view(), name='get-user-responses'),
     path('update-responses/', UpdateUserResponsesView.as_view(), name='update-user-responses'),
     path('remove-response-id/', RemoveUserResponseIdView.as_view(), name='remove_response_id'),
+
+    path('remove-engagement-id/', RemoveUserEngagementIdView.as_view(), name='remove-engagement-id'),
 
 ]
