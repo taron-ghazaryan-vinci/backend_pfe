@@ -169,14 +169,15 @@ def submit_one_question(company_email, question_id, responses, engagements, free
 
 def calculate_score_for_issue(company_email, issue_name):
     """
-    Calcule les scores ESG et Engagement pour un enjeu donné, en ignorant les questions sans score.
+    Calcule les scores ESG et Engagement pour un enjeu donné,
+    en supposant que responsesChosen et engagementsChosen contiennent uniquement des objets.
     """
     company = find_user_by_email(company_email)
     if not company:
         return {"error": "Company not found"}
 
     questions = db.questions.find({"enjeu": issue_name})
-    print(questions)
+    print(f"Questions for issue '{issue_name}': {questions}")
 
     total_score_esg = 0
     total_score_engagement = 0
@@ -196,23 +197,31 @@ def calculate_score_for_issue(company_email, issue_name):
         user_response = next((resp for resp in company["responses"] if
                               resp["question"] == question_id), None)
         if user_response:
+            # Extraire les IDs des réponses choisies
+            responses_chosen_ids = [resp["id"] for resp in user_response.get("responsesChosen", [])]
+            engagements_chosen_ids = [resp["id"] for resp in user_response.get("engagementsChosen", [])]
+
             # Scores ESG des réponses choisies
             total_score_esg += sum(
                 next((resp["scoreESG"] for resp in
                       question.get("responsesPossible", []) if
                       resp["id"] == chosen_id), 0)
-                for chosen_id in user_response.get("responsesChosen", [])
+                for chosen_id in responses_chosen_ids
             ) / 2
+
             # Scores Engagement des engagements pris
             total_score_engagement += sum(
                 next((resp["scoreEngagement"] for resp in
                       question.get("responsesPossible", []) if
                       resp["id"] == chosen_id), 0)
-                for chosen_id in user_response.get("engagementsChosen", [])
+                for chosen_id in engagements_chosen_ids
             ) / 2
 
     # Facteur de normalisation pour ajuster sur 5
     normalization_factor = 5 / max_score if max_score > 0 else 1
+    print(f"Total score ESG before normalization: {total_score_esg}")
+    print(f"Total score Engagement before normalization: {total_score_engagement}")
+    print(f"Max score for issue: {max_score}")
 
     # Normaliser les scores obtenus
     normalized_esg = total_score_esg * normalization_factor
@@ -224,6 +233,7 @@ def calculate_score_for_issue(company_email, issue_name):
         "normalized_score_engagement": normalized_engagement,
         "max_score": 5  # L'enjeu est toujours sur 5
     }
+
 
 def calculate_scores_for_module(company_email, module):
     """
