@@ -2,7 +2,7 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from surveys.db import create_survey, get_engagements_clients, submit_one_question
+from surveys.db import create_survey, get_engagements_clients, submit_one_question, calculate_global_score
 from users.db import find_user_by_email
 
 
@@ -62,3 +62,15 @@ class SubmitListQuestionsView(APIView):
             submit_one_question(company_email, question_id, responses, engagements)
 
         return Response({"message": "Responses submitted successfully"}, status=200)
+
+class GlobalScoreView(APIView):
+    def get(self, request, company_email):
+        try:
+            scores = calculate_global_score(company_email)
+            if "error" in scores:
+                return Response(
+                    {"success": False, "error": scores["error"]}, status=404)
+
+            return Response({"success": True, "data": scores})
+        except Exception as e:
+            return Response({"success": False, "error": str(e)}, status=500)
