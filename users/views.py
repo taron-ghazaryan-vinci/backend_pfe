@@ -67,6 +67,7 @@ class LoginView(APIView):
             "templates" : user.get('templates'),
             "responses" : user.get('responses'),
             "boolean_esg" : user.get('boolean_esg'),
+            "etat_esg" : user.get('etat_esg'),
         }
 
         return Response({"message": "Connexion réussie", "user": user_data}, status=200)
