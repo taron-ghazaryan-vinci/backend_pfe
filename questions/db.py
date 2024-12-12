@@ -62,7 +62,7 @@ def create_open_question(enjeu, question_text, templates, esg):
         "enjeu": enjeu,
         "question": question_text,
         "templates": templates,
-        "type": "ouverte",
+        "type": "vide",
         "responsesPossible": [
             {
                 "id": "1",
